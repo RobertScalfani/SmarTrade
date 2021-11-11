@@ -36,7 +36,6 @@ public class LoginActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         Log.i("FIREBASE", "onCreate: FIREBASE");
 
-
         Button loginBtn = findViewById(R.id.login_btn);
         loginBtn.setOnClickListener(
             v -> {
@@ -44,11 +43,13 @@ public class LoginActivity extends AppCompatActivity {
                 // If successful, open the main activity
                 EditText emailText = findViewById(R.id.email_text);
                 String submittedEmail = emailText.getText().toString();
-                promptLogin(submittedEmail);
-//                    if(promptLogin(submittedEmail)){
+                if(!validateLogin()) {
+                    promptLogin(submittedEmail);
+                }
+                if(validateLogin()){
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     startActivity(intent);
-//                }
+                }
             }
         );
 
@@ -59,12 +60,13 @@ public class LoginActivity extends AppCompatActivity {
                 // If successful, open the main activity
                 EditText emailText = findViewById(R.id.email_text);
                 String submittedEmail = emailText.getText().toString();
-                if(promptRegistration(submittedEmail)){
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    startActivity(intent);
-                }
+                promptRegistration(submittedEmail);
             }
         );
+    }
+
+    private boolean validateLogin() {
+        return mAuth.getCurrentUser() != null;
     }
 
     @Override
@@ -86,59 +88,63 @@ public class LoginActivity extends AppCompatActivity {
         String email = submittedEmail;
         String password = PASSWORD;
         final boolean[] loginSuccess = {false};
-
-        mAuth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                    if (task.isSuccessful()) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Log.i("FIREBASE", "LOGIN");
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        loginSuccess[0] = true;
-                        Toast.makeText(LoginActivity.this, "Logged in as " + user.getDisplayName() + loginSuccess[0],
-                                Toast.LENGTH_SHORT).show();
-                    } else {
-                        // If sign in fails, display a message to the user.
-                        Log.i("FIREBASE", "LOGIN FAILED");
-                        Toast.makeText(LoginActivity.this, "Login Authentication failed.",
-                                Toast.LENGTH_SHORT).show();
+        if(email == null || email.isEmpty()) {
+            Toast.makeText(LoginActivity.this, "Please enter an email.",
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.i("FIREBASE", "LOGIN");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            loginSuccess[0] = true;
+                            Toast.makeText(LoginActivity.this, "Logged in as " + user.getEmail() + loginSuccess[0],
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.i("FIREBASE", "LOGIN FAILED");
+                            Toast.makeText(LoginActivity.this, "Login Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     }
-                }
-            });
-
-//        return loginSuccess[0];
+                });
+        }
     }
 
     /**
      * Registration on firebase.
      * @param submittedEmail
      */
-    public boolean promptRegistration(String submittedEmail) {
+    public void promptRegistration(String submittedEmail) {
         String email = submittedEmail;
         String password = PASSWORD;
-        final boolean[] registrationSuccess = {false};
 
-        mAuth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                    if (task.isSuccessful()) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Log.d("REGISTER", "createUserWithEmail:success");
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        Toast.makeText(LoginActivity.this, "Registered as " + user.getDisplayName(),
-                                Toast.LENGTH_SHORT).show();
-                        registrationSuccess[0] = true;
-                    } else {
-                        // If sign in fails, display a message to the user.
-                        Log.w("REGISTER", "createUserWithEmail:failure", task.getException());
-                        Toast.makeText(LoginActivity.this, "Registration Authentication failed.",
-                                Toast.LENGTH_SHORT).show();
+        if(email == null || email.isEmpty()) {
+            Toast.makeText(LoginActivity.this, "Please enter an email.",
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d("REGISTER", "createUserWithEmail:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            Toast.makeText(LoginActivity.this, "Registered as " + user.getEmail(),
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w("REGISTER", "createUserWithEmail:failure", task.getException());
+                            Toast.makeText(LoginActivity.this, "Registration Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     }
-                }
-            });
-        return registrationSuccess[0];
+                });
+        }
     }
 
 }
