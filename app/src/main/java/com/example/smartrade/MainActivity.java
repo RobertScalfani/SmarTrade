@@ -33,7 +33,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Temporarily just works as a way to test API
+        /**
+         * TODO
+         * Things to add:
+         * - Login screen (get firebase working with it)
+         * - Decide firebase object structure
+         * - Set up UI
+         * -    - Main tabs
+         */
 
         Button getPriceBtn = findViewById(R.id.get_price_btn);
         getPriceBtn.setOnClickListener(
