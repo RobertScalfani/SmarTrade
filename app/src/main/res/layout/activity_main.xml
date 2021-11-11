@@ -6,13 +6,30 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
+    <EditText
+        android:id="@+id/enter_ticker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Enter Ticker"
+        tools:layout_editor_absoluteX="122dp"
+        tools:layout_editor_absoluteY="212dp" />
 
+    <TextView
+        android:id="@+id/display_ticker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DISPLAYS PRICE"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="162dp" />
+
+    <Button
+        android:id="@+id/get_price_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Get ticker price"
+        tools:layout_editor_absoluteX="77dp"
+        tools:layout_editor_absoluteY="487dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>
