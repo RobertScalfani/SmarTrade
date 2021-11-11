@@ -1,3 +1,27 @@
 <resources>
     <string name="app_name">SmarTrade</string>
+    <string name="title_activity_test_botton_nav">testBottonNav</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="label1">label1</string>
+    <string name="label2">label2</string>
+    <string name="menu_search">menu_search</string>
+    <string name="menu_settings">menu_settings</string>
+    <string name="menu_navigation">menu_navigation</string>
+    <string name="login">Login</string>
+    <string name="password">Password</string>
+    <string name="email">Email</string>
+    <string name="register">Register</string>
+    <string name="enter_ticker">Enter Ticker</string>
+    <string name="displays_price">DISPLAYS PRICE</string>
+    <string name="get_ticker_price">Get ticker price</string>
+    <string name="symb">SYMB</string>
+    <string name="buy">buy</string>
+    <string name="sell">sell</string>
 </resources>
