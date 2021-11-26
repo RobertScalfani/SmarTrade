@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.joining;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.widget.Button;
@@ -45,24 +44,37 @@ public class MainActivity extends AppCompatActivity {
         Button getPriceBtn = findViewById(R.id.get_price_btn);
         getPriceBtn.setOnClickListener(
                 v -> {
-                    this.getTickerPrice();
+                    this.requestTickerPrice();
                 }
         );
-
     }
 
-    private void getTickerPrice() {
-
+    /**
+     * Requests the price of the requested ticker.
+     */
+    private void requestTickerPrice() {
         EditText enterTicker = findViewById(R.id.enter_ticker);
         String ticker = enterTicker.getText().toString();
         System.out.println("Requested Ticker: " + ticker);
 
         // Make ticker api request
         callWebserviceButtonHandler(ticker);
+    }
 
-        // Output result to textview.
-        TextView displayPrice = findViewById(R.id.display_ticker);
-        displayPrice.setText(ticker);
+    /**
+     * Listens for changes in the current ticker price. When it is notified of a price change, it updates the UI.
+     */
+    private void notifyPriceUpdate(double price, String ticker) {
+
+        // Update ticker.
+        TextView displayTicker = findViewById(R.id.display_ticker);
+        displayTicker.setText(ticker);
+        // Update price.
+        TextView displayPrice = findViewById(R.id.tickerPrice);
+        displayPrice.setText("$" + Double.toString(price));
+
+        Toast.makeText(MainActivity.this, "Price: " + price ,Toast.LENGTH_SHORT).show();
+
     }
 
     /**
@@ -126,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
          * @return
          * @throws IOException
          */
-        private String convertInputStreamToString(InputStream inputStream) throws IOException {
+        private String convertInputStreamToString(InputStream inputStream) {
             String newLineChar = System.getProperty("line.separator");
             try (Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines()) {
                 return lines.collect(joining(newLineChar));
@@ -137,13 +149,15 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(JSONObject jsonObject) {
             super.onPostExecute(jsonObject);
             System.out.println(jsonObject);
-            // Extract market Cap
             try {
+                // Parse JSON response.
                 JSONObject quoteResponse = jsonObject.getJSONObject("quoteResponse");
                 JSONArray results = quoteResponse.getJSONArray("result");
                 JSONObject result = (JSONObject) results.get(0);
                 double price = result.getDouble("ask");
-                Toast.makeText(MainActivity.this, "Price: " + price ,Toast.LENGTH_SHORT).show();
+                String ticker = result.getString("symbol");
+                // Update the activity with the new values.
+                MainActivity.this.notifyPriceUpdate(price, ticker);
             } catch (JSONException e) {
                 Toast.makeText(MainActivity.this, "Something went wrong " ,Toast.LENGTH_SHORT).show();
                 e.printStackTrace();

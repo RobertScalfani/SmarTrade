@@ -13,6 +13,7 @@
         android:ems="10"
         android:hint="@string/enter_ticker"
         android:inputType="textPersonName"
+        android:minHeight="48dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.08"
@@ -47,7 +48,7 @@
         app:layout_constraintVertical_bias="0.109" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/tickerPrice"
         android:layout_width="150sp"
         android:layout_height="wrap_content"
         android:text="$0.000"
