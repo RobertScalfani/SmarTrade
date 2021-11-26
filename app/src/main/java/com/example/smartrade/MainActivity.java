@@ -68,6 +68,14 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
+        // Sell Button
+        Button sellButton = findViewById(R.id.sellBtn);
+        sellButton.setOnClickListener(
+                v -> {
+                    this.sellStock(this.getCurrentTicker(), 2);
+                }
+        );
+
     }
 
     /**
@@ -97,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Sends the request to firebase from the current user.
+     * Sends a request to buy stock.
      */
     public void buyStock(String ticker, double sharesToBuy) {
         Toast.makeText(MainActivity.this, "Buy Initiated." ,Toast.LENGTH_SHORT).show();
@@ -124,6 +132,51 @@ public class MainActivity extends AppCompatActivity {
                     }
                     // Get the new stock count of the buy request.
                     double newSharesCount = currentSharesOwned + sharesToBuy;
+                    // Database Structure:
+                    rootReference
+                            .child(this.getUser().getUid())
+                            .child(STOCKS_OWNED)
+                            .child(ticker)
+                            .setValue(newSharesCount);
+                    this.updateUserStockOwned(ticker);
+                }
+            });
+        }
+    }
+
+    /**
+     * Sends a request to sell stock.
+     */
+    public void sellStock(String ticker, double sharesToSell) {
+        Toast.makeText(MainActivity.this, "Sell Initiated." ,Toast.LENGTH_SHORT).show();
+
+        if(ticker == null) {
+            Toast.makeText(getApplicationContext(), "Please enter a ticker to buy.", Toast.LENGTH_SHORT).show();
+        } else {
+            DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+            // Update the current count for this sticker for this user.
+            rootReference
+                    .child(this.getUser().getUid())
+                    .child(STOCKS_OWNED)
+                    .child(ticker)
+                    .get().addOnCompleteListener(task -> {
+                if (!task.isSuccessful()) {
+                    Toast.makeText(MainActivity.this, "Sell Unsuccessful." ,Toast.LENGTH_SHORT).show();
+                    Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
+                } else {
+                    // Return the number of shares owned by the user.
+                    String result = String.valueOf(task.getResult().getValue());
+                    if (task.getResult().getValue() == null) {
+                        Toast.makeText(MainActivity.this, "You do not own any shares of this stock." ,Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    double currentSharesOwned = Double.parseDouble(result);
+                    if (currentSharesOwned <= 0.0) {
+                        Toast.makeText(MainActivity.this, "You do not own any shares of this stock." ,Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    // Get the new stock count of the buy request.
+                    double newSharesCount = currentSharesOwned - sharesToSell;
                     // Database Structure:
                     rootReference
                             .child(this.getUser().getUid())
