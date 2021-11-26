@@ -20,7 +20,7 @@
     <string name="register">Register</string>
     <string name="enter_ticker">Enter Ticker</string>
     <string name="displays_price">DISPLAYS PRICE</string>
-    <string name="get_ticker_price">Get ticker price</string>
+    <string name="get_ticker_price">Get ticker info</string>
     <string name="symb">SYMB</string>
     <string name="buy">buy</string>
     <string name="sell">sell</string>

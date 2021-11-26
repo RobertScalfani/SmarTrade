@@ -6,10 +6,16 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,12 +31,18 @@ import java.util.stream.Stream;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String STOCKS_OWNED = "STOCKS_OWNED";
+    private FirebaseAuth mAuth;
     private final static String API_KEY = "ZIWwEJPxnx3gCZVF9f6QKa6cH8MV7J4o4S5aQeSp";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Firebase
+        mAuth = FirebaseAuth.getInstance();
+        Log.i("FIREBASE", "Initialized");
 
         /**
          * TODO
@@ -44,19 +56,93 @@ public class MainActivity extends AppCompatActivity {
         Button getPriceBtn = findViewById(R.id.get_price_btn);
         getPriceBtn.setOnClickListener(
                 v -> {
-                    this.requestTickerPrice();
+                    this.updateTickerInfo();
                 }
         );
+
+        // Buy Button
+        Button buyButton = findViewById(R.id.buyBtn);
+        buyButton.setOnClickListener(
+                v -> {
+                    this.buyStock(this.getCurrentTicker(), 3.2);
+                }
+        );
+
+    }
+
+    /**
+     * Returns the current ticker selected by the user.
+     * @return
+     */
+    private String getCurrentTicker() {
+        EditText enterTicker = findViewById(R.id.enter_ticker);
+        String ticker = enterTicker.getText().toString();
+        if(ticker == null){
+            Toast.makeText(MainActivity.this, "No ticker selected." ,Toast.LENGTH_SHORT).show();
+        }
+        return ticker;
+    }
+
+    /**
+     * Returns the currently logged in Firebase user.
+     * @return
+     */
+    private FirebaseUser getUser() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if(currentUser == null){
+            Toast.makeText(MainActivity.this, "No user is logged in." ,Toast.LENGTH_SHORT).show();
+            throw new RuntimeException("User is not logged in.");
+        }
+        return currentUser;
+    }
+
+    /**
+     * Sends the request to firebase from the current user.
+     */
+    public void buyStock(String ticker, double sharesToBuy) {
+        Toast.makeText(MainActivity.this, "Buy Initiated." ,Toast.LENGTH_SHORT).show();
+
+        if(ticker == null) {
+            Toast.makeText(getApplicationContext(), "Please enter a ticker to buy.", Toast.LENGTH_SHORT).show();
+        } else {
+            DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+            // Update the current count for this sticker for this user.
+            rootReference
+                    .child(this.getUser().getUid())
+                    .child(STOCKS_OWNED)
+                    .child(ticker)
+                    .get().addOnCompleteListener(task -> {
+                if (!task.isSuccessful()) {
+                    Toast.makeText(MainActivity.this, "Buy Unsuccessful." ,Toast.LENGTH_SHORT).show();
+                    Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
+                } else {
+                    // Return the number of shares owned by the user.
+                    String result = String.valueOf(task.getResult().getValue());
+                    double currentSharesOwned = 0.0;
+                    if (task.getResult().getValue() != null) {
+                        currentSharesOwned = Double.parseDouble(result);
+                    }
+                    // Get the new stock count of the buy request.
+                    double newSharesCount = currentSharesOwned + sharesToBuy;
+                    // Database Structure:
+                    rootReference
+                            .child(this.getUser().getUid())
+                            .child(STOCKS_OWNED)
+                            .child(ticker)
+                            .setValue(newSharesCount);
+                    this.updateUserStockOwned(ticker);
+                }
+            });
+        }
     }
 
     /**
      * Requests the price of the requested ticker.
      */
-    private void requestTickerPrice() {
-        EditText enterTicker = findViewById(R.id.enter_ticker);
-        String ticker = enterTicker.getText().toString();
+    private void updateTickerInfo() {
+        String ticker = this.getCurrentTicker();
         System.out.println("Requested Ticker: " + ticker);
-
+        this.updateUserStockOwned(ticker);
         // Make ticker api request
         callWebserviceButtonHandler(ticker);
     }
@@ -69,12 +155,42 @@ public class MainActivity extends AppCompatActivity {
         // Update ticker.
         TextView displayTicker = findViewById(R.id.display_ticker);
         displayTicker.setText(ticker);
+        // Update number of ticker owned.
+        this.updateUserStockOwned(ticker);
         // Update price.
         TextView displayPrice = findViewById(R.id.tickerPrice);
-        displayPrice.setText("$" + Double.toString(price));
+        displayPrice.setText("$" + price);
 
         Toast.makeText(MainActivity.this, "Price: " + price ,Toast.LENGTH_SHORT).show();
 
+    }
+
+    /**
+     * Displays how much of the requested stock the user owns.
+     * @param ticker The stock ticker to check for.
+     */
+    private void updateUserStockOwned(String ticker) {
+        Toast.makeText(MainActivity.this, "Updating user stock owned." ,Toast.LENGTH_SHORT).show();
+        DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+        rootReference
+                .child(this.getUser().getUid())
+                .child(STOCKS_OWNED)
+                .child(ticker)
+                .get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                Toast.makeText(MainActivity.this, "Error updating user stock owned." ,Toast.LENGTH_SHORT).show();
+                Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
+            } else {
+                // Update the number of shares owned by the user.
+                String result = String.valueOf(task.getResult().getValue());
+                if (task.getResult().getValue() != null) {
+                    double sharesOwned = Double.parseDouble(result);
+                    TextView sharesOwnedText = findViewById(R.id.stockOwned);
+                    sharesOwnedText.setText("Shares Owned: " + String.valueOf(sharesOwned));
+                    Toast.makeText(MainActivity.this, "Updated user stock owned: " + sharesOwned ,Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     /**
@@ -102,7 +218,6 @@ public class MainActivity extends AppCompatActivity {
             JSONObject jObject = new JSONObject();
             try {
                 // DOCUMENTATION: https://www.yahoofinanceapi.com/
-                // format:
                 // https://api.polygon.io/vX/reference/tickers/AAPL?apiKey=V1aOJf2eMgIpMCt9z495xd9VJHKyPO58
                 // https://yfapi.net/v6/finance/quote?region=US&lang=en&symbols=AAPL%2CBTC-USD%2CEURUSD%3DX
 
@@ -156,10 +271,10 @@ public class MainActivity extends AppCompatActivity {
                 JSONObject result = (JSONObject) results.get(0);
                 double price = result.getDouble("ask");
                 String ticker = result.getString("symbol");
-                // Update the activity with the new values.
+                // Notify the activity of the new values.
                 MainActivity.this.notifyPriceUpdate(price, ticker);
             } catch (JSONException e) {
-                Toast.makeText(MainActivity.this, "Something went wrong " ,Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Something went wrong" ,Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
         }

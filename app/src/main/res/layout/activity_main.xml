@@ -84,4 +84,21 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.819" />
 
+    <EditText
+        android:id="@+id/editTextTextPersonName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPersonName"
+        tools:layout_editor_absoluteX="25dp"
+        tools:layout_editor_absoluteY="295dp" />
+
+    <TextView
+        android:id="@+id/stockOwned"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stock Owned: 0"
+        tools:layout_editor_absoluteX="27dp"
+        tools:layout_editor_absoluteY="182dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
