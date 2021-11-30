@@ -47,8 +47,9 @@ public class LoginActivity extends AppCompatActivity {
                     promptLogin(submittedEmail);
                 }
                 if(validateLogin()){
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    Intent intent = new Intent(LoginActivity.this, Dashboard.class);
                     startActivity(intent);
+                    finish();
                 }
             }
         );
@@ -92,6 +93,8 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(LoginActivity.this, "Please enter an email.",
                     Toast.LENGTH_SHORT).show();
         } else {
+            // Bug: Login Button requires 2 taps to log in
+
             mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override

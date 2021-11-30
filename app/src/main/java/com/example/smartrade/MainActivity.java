@@ -4,10 +4,12 @@ import static java.util.stream.Collectors.joining;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -78,6 +80,34 @@ public class MainActivity extends AppCompatActivity {
                     this.sellStock(this.getCurrentTicker(), this.getSharesToBuySell());
                 }
         );
+
+        // START NAVIGATION ACTIVITIES
+        // this is the trade page so we need..
+        // - logout DONE
+        // - dashboard
+        // - leaderboard DONE
+
+        // Logout Button
+        Button logoutBtn = findViewById(R.id.logoutBtn);
+        logoutBtn.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            String signOutMsg = "You are now signed out.";
+            Toast.makeText(MainActivity.this, signOutMsg, Toast.LENGTH_SHORT).show();
+        });
+
+        // Dashboard Button
+        Button tradeToDash = findViewById(R.id.trade_to_dashboard);
+        tradeToDash.setOnClickListener(v -> {
+            Intent intentDash = new Intent(this, Dashboard.class);
+            startActivity(intentDash);
+        });
+
+        // Leaderboard Button
+        Button tradeToLeaderboard = findViewById(R.id.trade_to_leaderboard);
+        // END NAVIGATION ACTIVITIES
 
     }
 
@@ -279,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Inner class to ping webservice without blocking the main thread.
      */
-    private class PingWebServiceTask  extends AsyncTask<String, Integer, JSONObject> {
+    class PingWebServiceTask  extends AsyncTask<String, Integer, JSONObject> {
 
         @Override
         protected void onProgressUpdate(Integer... values) {

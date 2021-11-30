@@ -24,4 +24,5 @@
     <string name="symb">SYMB</string>
     <string name="buy">buy</string>
     <string name="sell">sell</string>
+    <string name="welcome_to_smartrade">Welcome to SmarTrade</string>
 </resources>
