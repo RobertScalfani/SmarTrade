@@ -25,4 +25,16 @@
     <string name="buy">buy</string>
     <string name="sell">sell</string>
     <string name="welcome_to_smartrade">Welcome to SmarTrade</string>
+    <string name="portfolio_value">Portfolio Value</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="trade">Trade</string>
+    <string name="logout">Logout</string>
+    <string name="position_value">Position Value</string>
+    <string name="gain_loss">Gain/Loss</string>
+    <string name="cash_balance">Cash Balance</string>
+    <string name="_0_00">0.00</string>
+    <string name="_0_00">0.00</string>
+    <string name="_0_00">0.00</string>
+    <string name="_0_00">0.00</string>
+    <string name="_0_00">0.00</string>
 </resources>
