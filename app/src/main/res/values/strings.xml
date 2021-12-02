@@ -32,9 +32,9 @@
     <string name="position_value">Position Value</string>
     <string name="gain_loss">Gain/Loss</string>
     <string name="cash_balance">Cash Balance</string>
-    <string name="_0_00">0.00</string>
-    <string name="_0_00">0.00</string>
-    <string name="_0_00">0.00</string>
-    <string name="_0_00">0.00</string>
-    <string name="_0_00">0.00</string>
+    <string name="textViewPortfolioValue">0.00</string>
+    <string name="textviewPositionValue">0.00</string>
+    <string name="cashBalance">0.00</string>
+    <string name="gainlossD">0.00</string>
+    <string name="gainlossP">0.00</string>
 </resources>

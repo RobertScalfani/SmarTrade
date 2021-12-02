@@ -11,19 +11,17 @@ import android.widget.Toast;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class Dashboard extends AppCompatActivity {
-    /**
-     * Dashboard textviews
-     */
-    TextView portfolioValue = findViewById(R.id.textViewPortfolioValue);
-    TextView positionValue = findViewById(R.id.textviewPositionValue);
-    TextView cashBalance = findViewById(R.id.cashBalance);
-    TextView gainLossDollar = findViewById(R.id.gainlossD);
-    TextView gainLossPercentage = findViewById(R.id.gainlossP);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
+
+        TextView portfolioValue = findViewById(R.id.textViewPortfolioValue);
+        TextView positionValue = findViewById(R.id.textviewPositionValue);
+        TextView cashBalance = findViewById(R.id.cashBalance);
+        TextView gainLossDollar = findViewById(R.id.textViewGainlossD);
+        TextView gainLossPercentage = findViewById(R.id.textViewGainlossP);
 
         // START NAVIGATION ACTIONS
 

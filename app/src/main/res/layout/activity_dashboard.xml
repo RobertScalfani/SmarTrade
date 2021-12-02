@@ -60,7 +60,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="200dp"
-        android:text="@string/_0_00"
+        android:text="@string/textViewPortfolioValue"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -86,7 +86,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="200dp"
-        android:text="@string/_0_00"
+        android:text="@string/cashBalance"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -112,7 +112,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="200dp"
-        android:text="@string/_0_00"
+        android:text="@string/textviewPositionValue"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -134,11 +134,11 @@
         app:layout_constraintVertical_bias="0.175" />
 
     <TextView
-        android:id="@+id/gainlossP"
+        android:id="@+id/textViewGainlossP"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="200dp"
-        android:text="@string/_0_00"
+        android:text="@string/gainlossP"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -147,11 +147,11 @@
         app:layout_constraintVertical_bias="0.212" />
 
     <TextView
-        android:id="@+id/gainlossD"
+        android:id="@+id/textViewGainlossD"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="200dp"
-        android:text="@string/_0_00"
+        android:text="@string/gainlossD"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
