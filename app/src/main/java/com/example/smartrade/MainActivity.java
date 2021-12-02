@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 public class MainActivity extends AppCompatActivity implements FinanceApiListener {
@@ -48,6 +49,16 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
                     this.updateTickerInfo();
                 }
         );
+
+        Button addMoneyBtn = findViewById(R.id.getMoney);
+        addMoneyBtn.setOnClickListener(
+                v -> {
+                    this.addToCashBalance(10000);
+                }
+        );
+
+        // Force-initialize the database.
+        Database.initializeDatabase(this);
 
         // Buy/Sell input.
         EditText buySellEditText = findViewById(R.id.buySellEditText);
@@ -99,6 +110,10 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
 
     }
 
+    private void addToCashBalance(double moneyToAdd) {
+        Database.getDatabase().addToCashBalance(moneyToAdd);
+    }
+
     /**
      * Returns the number of shares to buy/sell as requested by the user.
      * @return
@@ -123,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
         if(ticker.equals("")){
             Toast.makeText(MainActivity.this, "No ticker selected." ,Toast.LENGTH_SHORT).show();
         }
-        return ticker;
+        return ticker.toUpperCase(Locale.ROOT);
     }
 
     /**
@@ -131,11 +146,7 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
      */
     public void buyStock(String ticker, double sharesToBuy) {
         Toast.makeText(MainActivity.this, "Buy Initiated." ,Toast.LENGTH_SHORT).show();
-        try {
-            Database.getDatabase().buyStock(ticker, sharesToBuy, this);
-        } catch (LoginException e) {
-            Toast.makeText(MainActivity.this, "There was an issue getting your user information. " + e.toString() ,Toast.LENGTH_SHORT).show();
-        }
+        Database.getDatabase().buyStock(ticker, sharesToBuy, this);
     }
 
     /**
