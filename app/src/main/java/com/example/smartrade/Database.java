@@ -1,7 +1,6 @@
 package com.example.smartrade;
 
 import android.util.Log;
-import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -11,10 +10,35 @@ import com.google.firebase.database.FirebaseDatabase;
 /**
  * A class that handles all database transactions.
  */
-public class Database {
+public class Database implements FinanceApiListener {
 
     private static final String STOCKS_OWNED = "STOCKS_OWNED";
+    private static final String CASH_BALANCE = "CASH_BALANCE";
     private static final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
+    // Bad coding practice, but all I can think of for now is a field to track the current shares to sell.
+    private double sharesToSellTracker = 0.0;
+    // Also bad practice, it'd be nice to find a better way to do this. Specifically because the data needs to be passed through the API listener.
+    private MainActivity mainActivity;
+
+    // Database Singleton
+    private static Database database;
+
+    /**
+     * Returns the database singleton.
+     * @return
+     */
+    public static Database getDatabase(){
+        if(database == null){
+            database = new Database();
+        }
+        return database;
+    }
+
+    /**
+     * Private constructor to enforce the database singleton.
+     */
+    private Database(){}
 
     /**
      * Returns the currently logged in Firebase user.
@@ -29,29 +53,25 @@ public class Database {
     }
 
     /**
-     * Displays how much of the requested stock the user owns.
-     * @param ticker The stock ticker to check for.
-     * @param mainActivity
+     * Returns the user's database reference.
+     * @param user
+     * @return
      */
-    public static void updateUserStockOwned(FirebaseUser user, String ticker, MainActivity mainActivity) {
+    private static DatabaseReference getUserReference(FirebaseUser user) {
         DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
-        rootReference
-                .child(user.getUid())
-                .child(STOCKS_OWNED)
-                .child(ticker)
-                .get().addOnCompleteListener(task -> {
-            if (!task.isSuccessful()) {
-                Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
-                mainActivity.sendToast("Error updating user stock owned.");
-            } else {
-                // Update the number of shares owned by the user.
-                String result = String.valueOf(task.getResult().getValue());
-                if (task.getResult().getValue() != null) {
-                    double sharesOwned = Double.parseDouble(result);
-                    mainActivity.setSharesOwnedTo(sharesOwned);
-                }
-            }
-        });
+        return rootReference
+                .child(user.getUid());
+    }
+
+    /**
+     * Returns the user's cash balance database reference.
+     * @param user
+     * @return
+     */
+    private static DatabaseReference getUserCashBalanceReference(FirebaseUser user) {
+        DatabaseReference userReference = Database.getUserReference(user);
+        return userReference
+                .child(CASH_BALANCE);
     }
 
     /**
@@ -60,9 +80,8 @@ public class Database {
      * @return
      */
     private static DatabaseReference getUserTickerReference(FirebaseUser user, String ticker) {
-        DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
-        return rootReference
-                .child(user.getUid())
+        DatabaseReference userReference = Database.getUserReference(user);
+        return userReference
                 .child(STOCKS_OWNED)
                 .child(ticker);
     }
@@ -70,7 +89,7 @@ public class Database {
     /**
      * Sends a request to buy stock.
      */
-    public static void buyStock(String ticker, double sharesToBuy,  MainActivity mainActivity) throws LoginException {
+    public void buyStock(String ticker, double sharesToBuy,  MainActivity mainActivity) throws LoginException {
 
         if(sharesToBuy <= 0) {
             mainActivity.sendToast("Please enter a buy value greater than 0.");
@@ -101,7 +120,7 @@ public class Database {
                 double newSharesCount = currentSharesOwned + sharesToBuy;
                 // Database Structure:
                 userTickerReference.setValue(newSharesCount);
-                Database.updateUserStockOwned(user, ticker, mainActivity);
+                mainActivity.setSharesOwnedTo(newSharesCount);
             }
         });
     }
@@ -111,7 +130,10 @@ public class Database {
      * @param ticker
      * @param sharesToSell
      */
-    public static void sellStock(String ticker, double sharesToSell, MainActivity mainActivity) throws LoginException {
+    public void sellStock(String ticker, double sharesToSell, MainActivity mainActivity) throws LoginException {
+
+        // Bad practice, would like to update this somehow...
+        this.mainActivity = mainActivity;
 
         if(sharesToSell <= 0) {
             mainActivity.sendToast("Please enter a sell value greater than 0.");
@@ -145,11 +167,79 @@ public class Database {
                     mainActivity.sendToast("You do not own enough shares of this stock. You have " + currentSharesOwned + " shares and tried to sell " + sharesToSell + ".");
                     return;
                 }
-                // Database Structure:
+                // Update shares count.
                 userTickerReference.setValue(newSharesCount);
-                Database.updateUserStockOwned(user, ticker, mainActivity);
+                mainActivity.setSharesOwnedTo(newSharesCount);
+                // Ping the API to update cash balance.
+                this.sharesToSellTracker = sharesToSell;
+                PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
             }
         });
+    }
+
+    /**
+     * Displays how much of the requested stock the user owns.
+     * @param ticker The stock ticker to check for.
+     * @param mainActivity
+     */
+    public void updateUserStockOwned(FirebaseUser user, String ticker, MainActivity mainActivity) {
+        DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+        rootReference
+                .child(user.getUid())
+                .child(STOCKS_OWNED)
+                .child(ticker)
+                .get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
+                mainActivity.sendToast("Error updating user stock owned.");
+            } else {
+                // Update the number of shares owned by the user.
+                String result = String.valueOf(task.getResult().getValue());
+                if (task.getResult().getValue() != null) {
+                    double sharesOwned = Double.parseDouble(result);
+                    mainActivity.setSharesOwnedTo(sharesOwned);
+                }
+            }
+        });
+    }
+
+    /**
+     * Increases the current user's cash balance by the given amount.
+     * @param user
+     * @param increaseAmount
+     */
+    private void increaseUserCashBalance(FirebaseUser user, double increaseAmount, MainActivity mainActivity) {
+        DatabaseReference cashBalanceReference = Database.getUserCashBalanceReference(user);
+        cashBalanceReference.get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                Log.e("FIREBASE", "Error setting user's cash balance.", task.getException());
+                mainActivity.sendToast("Sell Unsuccessful.");
+                return;
+            } else {
+                // Returns the cash balance of the user.
+                String result = String.valueOf(task.getResult().getValue());
+                if (task.getResult().getValue() == null) {
+                    result = "0.0";
+                }
+                double currentCashBalance = Double.parseDouble(result);
+                // Get the new stock count of the buy request.
+                double newCashBalance = currentCashBalance + increaseAmount;
+                // Update cash balance.
+                cashBalanceReference.setValue(newCashBalance);
+                mainActivity.setCashBalance(newCashBalance);
+            }
+        });
+    }
+
+    @Override
+    public void notifyPriceUpdate(double price, String ticker) {
+        double valueOfSell = price * this.sharesToSellTracker;
+        try {
+            this.increaseUserCashBalance(Database.getCurrentUser(), valueOfSell, this.mainActivity);
+        } catch (LoginException e) {
+            // Login issue.
+            e.printStackTrace();
+        }
     }
 
 }
