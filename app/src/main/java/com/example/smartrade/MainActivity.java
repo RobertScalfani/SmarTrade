@@ -1,11 +1,8 @@
 package com.example.smartrade;
 
-import static java.util.stream.Collectors.joining;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.widget.Button;
@@ -15,21 +12,12 @@ import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.w3c.dom.Text;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Locale;
-import java.util.stream.Stream;
 
-public class MainActivity extends AppCompatActivity implements FinanceApiListener {
+/**
+ * Trading screen.
+ */
+public class MainActivity extends AppCompatActivity implements FinanceApiListener, DatabaseListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
      */
     public void buyStock(String ticker, double sharesToBuy) {
         Toast.makeText(MainActivity.this, "Buy Initiated." ,Toast.LENGTH_SHORT).show();
-        Database.getDatabase().buyStock(ticker, sharesToBuy, this);
+        Database.getDatabase().buyStock(ticker, sharesToBuy);
     }
 
     /**
@@ -155,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
     public void sellStock(String ticker, double sharesToSell) {
         Toast.makeText(MainActivity.this, "Sell Initiated." ,Toast.LENGTH_SHORT).show();
         try {
-            Database.getDatabase().sellStock(ticker, sharesToSell, this);
+            Database.getDatabase().sellStock(ticker, sharesToSell);
         } catch (LoginException e) {
             Toast.makeText(MainActivity.this, "There was an issue getting your user information. " + e.toString() ,Toast.LENGTH_SHORT).show();
         }
@@ -167,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
     private void updateTickerInfo() {
         String ticker = this.getCurrentTicker();
         try {
-            Database.getDatabase().updateUserStockOwned(Database.getCurrentUser(), ticker, this);
+            Database.getDatabase().updateUserStockOwned(Database.getCurrentUser(), ticker);
         } catch (LoginException e) {
             Toast.makeText(MainActivity.this, "There was an issue getting your user information. " + e.toString() ,Toast.LENGTH_SHORT).show();
         }
@@ -185,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
         displayTicker.setText(ticker);
         // Update number of ticker owned.
         try {
-            Database.getDatabase().updateUserStockOwned(Database.getCurrentUser(), ticker, this);
+            Database.getDatabase().updateUserStockOwned(Database.getCurrentUser(), ticker);
         } catch (LoginException e) {
             Toast.makeText(MainActivity.this, "There was an issue getting your user information. " + e.toString() ,Toast.LENGTH_SHORT).show();
         }
@@ -195,19 +183,11 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
     }
 
     /**
-     * Sets the displayed shares owned to the given value.
-     * @param sharesOwned
-     */
-    public void setSharesOwnedTo(double sharesOwned) {
-        TextView sharesOwnedText = findViewById(R.id.stockOwned);
-        sharesOwnedText.setText("Shares Owned: " + sharesOwned);
-    }
-
-    /**
      * Sends a toast with the given message.
      * @param message
      */
-    public void sendToast(String message) {
+    @Override
+    public void notifyMessage(String message) {
         Toast.makeText(MainActivity.this, message ,Toast.LENGTH_SHORT).show();
     }
 
@@ -215,8 +195,15 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
      * Sets the cash balance displayed on screen.
      * @param newCashBalance
      */
-    public void setCashBalance(double newCashBalance) {
+    @Override
+    public void notifyCashBalanceUpdate(double newCashBalance) {
         TextView cashBalanceMainActivity = findViewById(R.id.CashBalanceMain);
         cashBalanceMainActivity.setText("Cash Balance: " + newCashBalance);
+    }
+
+    @Override
+    public void notifyShareCountUpdate(double newSharesCount) {
+        TextView sharesOwnedText = findViewById(R.id.stockOwned);
+        sharesOwnedText.setText("Shares Owned: " + newSharesCount);
     }
 }
