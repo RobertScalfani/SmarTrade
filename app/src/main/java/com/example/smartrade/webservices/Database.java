@@ -1,4 +1,4 @@
-package com.example.smartrade;
+package com.example.smartrade.webservices;
 
 import android.util.Log;
 
@@ -20,9 +20,10 @@ public class Database implements FinanceApiListener {
 
     // Bad coding practice, but all I can think of for now is a field to track the current shares to sell.
     private double sharesToSellTracker = 0.0;
-    private double shareToBuyTracker = 0.0;
+    private double sharesToBuyTracker = 0.0;
     private double cashBalanceTracker = 0.0;
 
+    // The listener that should be notified of updates to database requests.
     private static DatabaseListener databaseListener;
 
     // Database Singleton
@@ -50,11 +51,19 @@ public class Database implements FinanceApiListener {
         }
     }
 
+    /**
+     * Initializes the database with the give database listener.
+     * @param databaseListener
+     */
     public static void initializeDatabase(DatabaseListener databaseListener) {
         Database.databaseListener = databaseListener;
         Database.database = new Database();
     }
 
+    /**
+     * Initializes the cash balance.
+     * @throws LoginException
+     */
     private void initializeCashBalance() throws LoginException {
         DatabaseReference cashBalanceReference = Database.getUserCashBalanceReference(Database.getCurrentUser());
         cashBalanceReference.get().addOnCompleteListener(task -> {
@@ -81,7 +90,7 @@ public class Database implements FinanceApiListener {
      * Returns the currently logged in Firebase user.
      * @return
      */
-    static FirebaseUser getCurrentUser() throws LoginException {
+    public static FirebaseUser getCurrentUser() throws LoginException {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if(currentUser == null){
             throw new LoginException("No user is logged in.");
@@ -128,7 +137,7 @@ public class Database implements FinanceApiListener {
      */
     public void buyStock(String ticker, double sharesToBuy) {
         buyingStock = true;
-        this.shareToBuyTracker = sharesToBuy;
+        this.sharesToBuyTracker = sharesToBuy;
 
         if(sharesToBuy <= 0) {
             databaseListener.notifyMessage("Please enter a buy value greater than 0.");
@@ -320,20 +329,25 @@ public class Database implements FinanceApiListener {
 
         if(buyingStock){
             try {
-                this.buyStockBasedOnPrice(ticker, this.shareToBuyTracker, price);
+                this.buyStockBasedOnPrice(ticker, this.sharesToBuyTracker, price);
             } catch (LoginException e) {
-                // Login issue.
-                e.printStackTrace();
+                databaseListener.notifyMessage("There was an issue getting your user information...");
+                return;
             }
         } else {
             double valueOfSell = price * this.sharesToSellTracker;
             try {
                 this.increaseUserCashBalance(Database.getCurrentUser(), valueOfSell);
             } catch (LoginException e) {
-                // Login issue.
-                e.printStackTrace();
+                databaseListener.notifyMessage("There was an issue getting your user information...");
+                return;
             }
         }
+    }
+
+    @Override
+    public void notifyMessage(String s) {
+        databaseListener.notifyMessage(s);
     }
 
     /**
@@ -344,7 +358,8 @@ public class Database implements FinanceApiListener {
         try {
             this.increaseUserCashBalance(Database.getCurrentUser(), moneyToAdd);
         } catch (LoginException e) {
-            e.printStackTrace();
+            databaseListener.notifyMessage("There was an issue getting your user information...");
+            return;
         }
     }
 }

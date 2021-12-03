@@ -1,4 +1,4 @@
-package com.example.smartrade;
+package com.example.smartrade.webservices;
 
 import static java.util.stream.Collectors.joining;
 
@@ -102,7 +102,7 @@ public class PingFinanceApiTask extends AsyncTask<String, Integer, JSONObject> {
             // Notify the activity of the new values.
             listener.notifyPriceUpdate(price, ticker);
         } catch (JSONException e) {
-//            mainActivity.sendToast("Something went wrong");
+            listener.notifyMessage("Something went wrong when fetching the Stock price.");
             e.printStackTrace();
         }
     }

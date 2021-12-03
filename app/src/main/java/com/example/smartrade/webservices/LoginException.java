@@ -1,4 +1,4 @@
-package com.example.smartrade;
+package com.example.smartrade.webservices;
 
 public class LoginException extends Exception {
     public LoginException(String s) {

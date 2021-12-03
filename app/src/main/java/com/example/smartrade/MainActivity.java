@@ -10,6 +10,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.smartrade.webservices.Database;
+import com.example.smartrade.webservices.DatabaseListener;
+import com.example.smartrade.webservices.FinanceApiListener;
+import com.example.smartrade.webservices.LoginException;
+import com.example.smartrade.webservices.PingFinanceApiTask;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Locale;
@@ -133,7 +138,6 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
      * Sends a request to buy stock.
      */
     public void buyStock(String ticker, double sharesToBuy) {
-        Toast.makeText(MainActivity.this, "Buy Initiated." ,Toast.LENGTH_SHORT).show();
         Database.getDatabase().buyStock(ticker, sharesToBuy);
     }
 
@@ -141,7 +145,6 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
      * Sends a request to sell stock.
      */
     public void sellStock(String ticker, double sharesToSell) {
-        Toast.makeText(MainActivity.this, "Sell Initiated." ,Toast.LENGTH_SHORT).show();
         try {
             Database.getDatabase().sellStock(ticker, sharesToSell);
         } catch (LoginException e) {
