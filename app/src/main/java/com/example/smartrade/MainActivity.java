@@ -35,8 +35,8 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
          * -    - Main tabs
          */
 
-        Button getPriceBtn = findViewById(R.id.get_price_btn);
-        getPriceBtn.setOnClickListener(
+        Button stockInfoButton = findViewById(R.id.get_price_btn);
+        stockInfoButton.setOnClickListener(
                 v -> {
                     this.updateTickerInfo();
                 }
@@ -113,11 +113,18 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
     private double getSharesToBuySell() {
         EditText buySellEditText = findViewById(R.id.buySellEditText);
         Editable rawBuySellCount = buySellEditText.getText();
-        if(rawBuySellCount == null) {
+        if(rawBuySellCount == null || rawBuySellCount.equals("")) {
             Toast.makeText(MainActivity.this, "Please input the number of shares to buy/sell." ,Toast.LENGTH_SHORT).show();
             return 0.0;
         }
-        return Double.parseDouble(buySellEditText.getText().toString());
+        double sharesToBuySell;
+        try{
+            sharesToBuySell = Double.parseDouble(buySellEditText.getText().toString());
+        } catch (NumberFormatException e) {
+            Toast.makeText(MainActivity.this, "\'" + rawBuySellCount + "\' is not a valid number to buy or sell." ,Toast.LENGTH_SHORT).show();
+            sharesToBuySell = 0.0;
+        }
+        return sharesToBuySell;
     }
 
     /**

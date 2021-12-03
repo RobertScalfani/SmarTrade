@@ -40,7 +40,9 @@ public class Database implements FinanceApiListener {
      */
     public static void initializeDatabase(DatabaseListener databaseListener) {
         Database.databaseListener = databaseListener;
-        Database.database = new Database();
+        if(Database.database == null){
+            Database.database = new Database();
+        }
     }
 
     /**
@@ -123,7 +125,7 @@ public class Database implements FinanceApiListener {
             databaseListener.notifyMessage("Please enter a buy value greater than 0.");
             return;
         }
-        if(ticker == null) {
+        if(ticker == null || ticker.equals("")) {
             databaseListener.notifyMessage("Please enter a ticker to buy.");
             return;
         }
@@ -187,7 +189,7 @@ public class Database implements FinanceApiListener {
             databaseListener.notifyMessage("Please enter a sell value greater than 0.");
             return;
         }
-        if(ticker == null) {
+        if(ticker == null || ticker.equals("")) {
             databaseListener.notifyMessage("Please enter a ticker to sell.");
             return;
         }
@@ -359,7 +361,63 @@ public class Database implements FinanceApiListener {
         }
     }
 
-    public class FirebaseAccessException extends Exception {
+    /**
+     * Login on firebase
+     */
+    public void promptLogin(String email, String password, DatabaseListener loginListener) {
+        final boolean[] loginSuccess = {false};
+        if(email == null || email.isEmpty()) {
+            loginListener.notifyMessage("Please enter an email.");
+        } else {
+            // Bug: Login Button requires 2 taps to log in
+
+            mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // Sign in success, update UI with the signed-in user's information
+                        Log.i("FIREBASE", "LOGIN");
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        loginSuccess[0] = true;
+                        loginListener.notifyMessage("Logged in as " + user.getEmail() + loginSuccess[0]);
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Log.i("FIREBASE", "LOGIN FAILED");
+                        loginListener.notifyMessage("Login Authentication failed.");
+                    }
+                });
+        }
+    }
+
+    /**
+     * Registration on firebase.
+     */
+    public void promptRegistration(String email, String password, DatabaseListener loginListener) {
+
+        if(email == null || email.isEmpty()) {
+            loginListener.notifyMessage("Please enter an email.");
+        } else {
+            mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // Sign in success, update UI with the signed-in user's information
+                        Log.d("REGISTER", "createUserWithEmail:success");
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        loginListener.notifyMessage("Registered in as " + user.getEmail());
+
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Log.w("REGISTER", "createUserWithEmail:failure", task.getException());
+                        loginListener.notifyMessage("Registration Authentication failed.");
+                    }
+                });
+        }
+    }
+
+    public boolean validateLogin() {
+        return mAuth.getCurrentUser() != null;
+    }
+
+    public static class FirebaseAccessException extends Exception {
         public FirebaseAccessException(String s) {
             super(s);
         }
