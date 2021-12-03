@@ -13,7 +13,6 @@ import android.widget.Toast;
 import com.example.smartrade.webservices.Database;
 import com.example.smartrade.webservices.DatabaseListener;
 import com.example.smartrade.webservices.FinanceApiListener;
-import com.example.smartrade.webservices.LoginException;
 import com.example.smartrade.webservices.PingFinanceApiTask;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -147,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
     public void sellStock(String ticker, double sharesToSell) {
         try {
             Database.getDatabase().sellStock(ticker, sharesToSell);
-        } catch (LoginException e) {
+        } catch (Database.FirebaseAccessException e) {
             Toast.makeText(MainActivity.this, "There was an issue getting your user information. " + e.toString() ,Toast.LENGTH_SHORT).show();
         }
     }
@@ -157,47 +156,28 @@ public class MainActivity extends AppCompatActivity implements FinanceApiListene
      */
     private void updateTickerInfo() {
         String ticker = this.getCurrentTicker();
-        try {
-            Database.getDatabase().updateUserStockOwned(Database.getCurrentUser(), ticker);
-        } catch (LoginException e) {
-            Toast.makeText(MainActivity.this, "There was an issue getting your user information. " + e.toString() ,Toast.LENGTH_SHORT).show();
-        }
-        // Make ticker api request
+        Database.getDatabase().updateUserStockOwned(ticker);
+        // Make ticker api request.
         PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
     }
 
-    /**
-     * Listens for changes in the current ticker price. When it is notified of a price change, it updates the UI.
-     */
     @Override
     public void notifyPriceUpdate(double price, String ticker) {
         // Update ticker.
         TextView displayTicker = findViewById(R.id.display_ticker);
         displayTicker.setText(ticker);
-        // Update number of ticker owned.
-        try {
-            Database.getDatabase().updateUserStockOwned(Database.getCurrentUser(), ticker);
-        } catch (LoginException e) {
-            Toast.makeText(MainActivity.this, "There was an issue getting your user information. " + e.toString() ,Toast.LENGTH_SHORT).show();
-        }
+        // Update number of shares of this ticker owned.
+        Database.getDatabase().updateUserStockOwned(ticker);
         // Update price.
         TextView displayPrice = findViewById(R.id.tickerPrice);
         displayPrice.setText("$" + price);
     }
 
-    /**
-     * Sends a toast with the given message.
-     * @param message
-     */
     @Override
     public void notifyMessage(String message) {
         Toast.makeText(MainActivity.this, message ,Toast.LENGTH_SHORT).show();
     }
 
-    /**
-     * Sets the cash balance displayed on screen.
-     * @param newCashBalance
-     */
     @Override
     public void notifyCashBalanceUpdate(double newCashBalance) {
         TextView cashBalanceMainActivity = findViewById(R.id.CashBalanceMain);

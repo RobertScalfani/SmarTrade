@@ -10,22 +10,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.Date;
 
 /**
- * USER_ID
- *  - STOCK_TICKERS []
- *      - TICKER (string)
- *          - SHARES_OWNED
- *              - shares_owned (double)
- *          - HISTORY []
- *              - date (date)
- *              - buy/sell (boolean)
- *              - #shares (int)
- *              - cost_per_share (double)
- *  - CASH_BALANCE
- *      - cash_balance (double)
- */
-
-
-/**
  * A class that handles all database transactions.
  */
 public class Database implements FinanceApiListener {
@@ -36,23 +20,32 @@ public class Database implements FinanceApiListener {
     private static final String TRADE_HISTORY = "TRADE_HISTORY";
 
     private static final FirebaseAuth mAuth = FirebaseAuth.getInstance();
-    // Tracks the current buy or sell status of the user.
-    boolean buyingStock;
-
-    // Bad coding practice, but all I can think of for now is a field to track the current shares to sell.
-    private double sharesToSellTracker = 0.0;
-    private double sharesToBuyTracker = 0.0;
-    private double cashBalanceTracker = 0.0;
-
-    // The listener that should be notified of updates to database requests.
-    private static DatabaseListener databaseListener;
 
     // Database Singleton
     private static Database database;
 
+    // The listener that should be notified of updates to database requests.
+    private static DatabaseListener databaseListener;
+
+    // Probably bad coding practice, but all I can think of for now is fields to track these attributes. It works.
+    private double sharesToSellTracker = 0.0;
+    private double sharesToBuyTracker = 0.0;
+    private double cashBalanceTracker = 0.0;
+    // Tracks the current buy or sell status of the user.
+    TradeHistory.TransactionType transactionType;
+
+    /**
+     * Initializes the database with the give database listener.
+     * @param databaseListener  The listener that the database should send updates to.
+     */
+    public static void initializeDatabase(DatabaseListener databaseListener) {
+        Database.databaseListener = databaseListener;
+        Database.database = new Database();
+    }
+
     /**
      * Returns the database singleton.
-     * @return
+     * @return  An instance of the database singleton.
      */
     public static Database getDatabase(){
         if(database == null){
@@ -64,65 +57,32 @@ public class Database implements FinanceApiListener {
     /**
      * Private constructor to enforce the database singleton.
      */
-    private Database(){
+    private Database() {
         try {
-            this.initializeCashBalance();
-        } catch (LoginException e) {
+            // Force the current tracked cash balance to update.
+            this.changeUserCashBalance(this.getCurrentUser(), 0.0);
+        } catch (FirebaseAccessException e) {
+            Database.databaseListener.notifyMessage("There was an issue getting your user information.");
             e.printStackTrace();
         }
     }
 
     /**
-     * Initializes the database with the give database listener.
-     * @param databaseListener
-     */
-    public static void initializeDatabase(DatabaseListener databaseListener) {
-        Database.databaseListener = databaseListener;
-        Database.database = new Database();
-    }
-
-    /**
-     * Initializes the cash balance.
-     * @throws LoginException
-     */
-    private void initializeCashBalance() throws LoginException {
-        DatabaseReference cashBalanceReference = Database.getUserCashBalanceReference(Database.getCurrentUser());
-        cashBalanceReference.get().addOnCompleteListener(task -> {
-            if (!task.isSuccessful()) {
-                Log.e("FIREBASE", "Error setting user's cash balance.", task.getException());
-                databaseListener.notifyMessage("Sell Unsuccessful.");
-                return;
-            } else {
-                // Returns the cash balance of the user.
-                String result = String.valueOf(task.getResult().getValue());
-                if (task.getResult().getValue() == null) {
-                    result = "0.0";
-                }
-                double currentCashBalance = Double.parseDouble(result);
-                // Update cash balance.
-                cashBalanceReference.setValue(currentCashBalance);
-                this.cashBalanceTracker = currentCashBalance;
-                databaseListener.notifyCashBalanceUpdate(currentCashBalance);
-            }
-        });
-    }
-
-    /**
      * Returns the currently logged in Firebase user.
-     * @return
+     * @return  The current firebase user.
      */
-    public static FirebaseUser getCurrentUser() throws LoginException {
+    public FirebaseUser getCurrentUser() throws FirebaseAccessException {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if(currentUser == null){
-            throw new LoginException("No user is logged in.");
+            throw new FirebaseAccessException("No user is logged in.");
         }
         return currentUser;
     }
 
     /**
      * Returns the user's database reference.
-     * @param user
-     * @return
+     * @param user  The user to get the reference for.
+     * @return  The user's database reference.
      */
     private static DatabaseReference getUserReference(FirebaseUser user) {
         DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
@@ -131,8 +91,8 @@ public class Database implements FinanceApiListener {
 
     /**
      * Returns the user's cash balance database reference.
-     * @param user
-     * @return
+     * @param user The user to get the reference for.
+     * @return  The user's cash balance database reference.
      */
     private static DatabaseReference getUserCashBalanceReference(FirebaseUser user) {
         DatabaseReference userReference = Database.getUserReference(user);
@@ -142,8 +102,8 @@ public class Database implements FinanceApiListener {
 
     /**
      * Returns the firebase reference data for the ticker of the current user.
-     * @param ticker the ticker to check for.
-     * @return
+     * @param ticker the ticker to get the database reference for.
+     * @return The user's ticker database reference.
      */
     private static DatabaseReference getUserTickerReference(FirebaseUser user, String ticker) {
         DatabaseReference userReference = Database.getUserReference(user);
@@ -156,7 +116,7 @@ public class Database implements FinanceApiListener {
      * Sends a request to buy stock.
      */
     public void buyStock(String ticker, double sharesToBuy) {
-        buyingStock = true;
+        transactionType = TradeHistory.TransactionType.BUY;
         this.sharesToBuyTracker = sharesToBuy;
 
         if(sharesToBuy <= 0) {
@@ -175,7 +135,7 @@ public class Database implements FinanceApiListener {
     /**
      * Buys stock based on a price.
      */
-    public void buyStockBasedOnPrice(String ticker, double sharesToBuy,  double price) throws LoginException {
+    public void buyStockBasedOnPrice(String ticker, double sharesToBuy,  double price) throws FirebaseAccessException {
 
         // Check that the user can afford the transaction.
         if((price * sharesToBuy) > this.cashBalanceTracker ) {
@@ -183,7 +143,7 @@ public class Database implements FinanceApiListener {
             return;
         }
 
-        FirebaseUser user = Database.getCurrentUser();
+        FirebaseUser user = this.getCurrentUser();
 
         DatabaseReference userTickerSharesOwnedReference = Database.getUserTickerReference(user, ticker).child(SHARES_OWNED);
         // Update the current count for this sticker for this user.
@@ -202,7 +162,7 @@ public class Database implements FinanceApiListener {
 
                 // Add transaction to the trade history.
                 TradeHistory newTrade = new TradeHistory(new Date(), TradeHistory.TransactionType.BUY, sharesToBuy, price);
-                this.addTradeHistory(ticker, newTrade);
+                this.addTradeHistory(user, ticker, newTrade);
                 // Get the new stock count of the buy request.
                 double newSharesCount = currentSharesOwned + sharesToBuy;
                 // Set the new shares count.
@@ -214,14 +174,13 @@ public class Database implements FinanceApiListener {
         });
     }
 
-
     /**
      * Sends a request to sell a stock.
-     * @param ticker
-     * @param sharesToSell
+     * @param ticker    The ticker to sell.
+     * @param sharesToSell  The number of shares to sell.
      */
-    public void sellStock(String ticker, double sharesToSell) throws LoginException {
-        buyingStock = false;
+    public void sellStock(String ticker, double sharesToSell) throws FirebaseAccessException {
+        transactionType = TradeHistory.TransactionType.SELL;
         this.sharesToSellTracker = sharesToSell;
 
         if(sharesToSell <= 0) {
@@ -241,9 +200,9 @@ public class Database implements FinanceApiListener {
      * @param ticker
      * @param sharesToSell
      */
-    public void sellStockBasedOnPrice(String ticker, double sharesToSell, double price) throws LoginException {
+    public void sellStockBasedOnPrice(String ticker, double sharesToSell, double price) throws FirebaseAccessException {
 
-        FirebaseUser user = Database.getCurrentUser();
+        FirebaseUser user = this.getCurrentUser();
 
         DatabaseReference userTickerSharesOwnedReference = Database.getUserTickerReference(user, ticker).child(SHARES_OWNED);
         // Update the current count for this sticker for this user.
@@ -268,35 +227,23 @@ public class Database implements FinanceApiListener {
                 }
                 // Sell stock and increase the user's cash balance.
                 double valueOfSell = price * this.sharesToSellTracker;
-                try {
-                    this.increaseUserCashBalance(Database.getCurrentUser(), valueOfSell);
-                } catch (LoginException e) {
-                    databaseListener.notifyMessage("There was an issue getting your user information...");
-                    return;
-                }
+                this.increaseUserCashBalance(user, valueOfSell);
                 // Update shares count.
                 userTickerSharesOwnedReference.setValue(newSharesCount);
-                databaseListener.notifyShareCountUpdate(newSharesCount);
+                Database.databaseListener.notifyShareCountUpdate(newSharesCount);
                 // Add transaction to trade history.
                 TradeHistory newTrade = new TradeHistory(new Date(), TradeHistory.TransactionType.SELL, sharesToSell, price);
-                this.addTradeHistory(ticker, newTrade);
+                this.addTradeHistory(user, ticker, newTrade);
             }
         });
     }
 
     /**
      * Adds the given trade history to the given ticker for the current user.
-     * @param ticker
-     * @param newTrade
+     * @param ticker    The stock ticker to add the trade history to.
+     * @param newTrade  The new Trade transaction object.
      */
-    private void addTradeHistory(String ticker, TradeHistory newTrade) {
-        FirebaseUser user = null;
-        try {
-            user = Database.getCurrentUser();
-        } catch (LoginException e) {
-            e.printStackTrace();
-        }
-
+    private void addTradeHistory(FirebaseUser user, String ticker, TradeHistory newTrade) {
         DatabaseReference userTickerTradeHistoryReference = Database.getUserTickerReference(user, ticker).child(TRADE_HISTORY);
         userTickerTradeHistoryReference.child(newTrade.getDate()).setValue(newTrade);
     }
@@ -305,7 +252,16 @@ public class Database implements FinanceApiListener {
      * Displays how much of the requested stock the user owns.
      * @param ticker The stock ticker to check for.
      */
-    public void updateUserStockOwned(FirebaseUser user, String ticker) {
+    public void updateUserStockOwned(String ticker) {
+
+        FirebaseUser user = null;
+        try {
+            user = this.getCurrentUser();
+        } catch (FirebaseAccessException e) {
+            databaseListener.notifyMessage("There was an issue updating the user's stock owned.");
+            return;
+        }
+
         DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
         rootReference
                 .child(user.getUid())
@@ -328,44 +284,33 @@ public class Database implements FinanceApiListener {
 
     /**
      * Increases the current user's cash balance by the given amount.
-     * @param user
-     * @param increaseAmount
+     * @param user  The user to check for.
+     * @param increaseAmount    The amount to increase the user's cash balance by.
      */
     private void increaseUserCashBalance(FirebaseUser user, double increaseAmount) {
-        DatabaseReference cashBalanceReference = Database.getUserCashBalanceReference(user);
-        cashBalanceReference.get().addOnCompleteListener(task -> {
-            if (!task.isSuccessful()) {
-                Log.e("FIREBASE", "Error setting user's cash balance.", task.getException());
-                databaseListener.notifyMessage("Sell Unsuccessful.");
-                return;
-            } else {
-                // Returns the cash balance of the user.
-                String result = String.valueOf(task.getResult().getValue());
-                if (task.getResult().getValue() == null) {
-                    result = "0.0";
-                }
-                double currentCashBalance = Double.parseDouble(result);
-                // Get the new stock count of the buy request.
-                double newCashBalance = currentCashBalance + increaseAmount;
-                // Update cash balance.
-                cashBalanceReference.setValue(newCashBalance);
-                this.cashBalanceTracker = currentCashBalance;
-                databaseListener.notifyCashBalanceUpdate(newCashBalance);
-            }
-        });
+        this.changeUserCashBalance(user, increaseAmount);
     }
 
     /**
-     * Increases the current user's cash balance by the given amount.
-     * @param user
-     * @param decreaseAmount
+     * Increases the current user's cash balance by the given amount. Should use a positive input.
+     * @param user  The user to check for.
+     * @param decreaseAmount    The amount to decrease the user's cash balance by. Should be positive.
      */
     private void decreaseUserCashBalance(FirebaseUser user, double decreaseAmount) {
+        this.changeUserCashBalance(user, -decreaseAmount);
+    }
+
+    /**
+     * Changes the user's cash balance by the given amount. May be positive or negative.
+     * @param user  The user to check for.
+     * @param changeAmount    The amount to increase/decrease the user's cash balance by. May be positive or negative.
+     */
+    private void changeUserCashBalance(FirebaseUser user, double changeAmount) {
         DatabaseReference cashBalanceReference = Database.getUserCashBalanceReference(user);
         cashBalanceReference.get().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
-                Log.e("FIREBASE", "Error setting user's cash balance.", task.getException());
-                databaseListener.notifyMessage("Sell Unsuccessful.");
+                Log.e("FIREBASE", "Error updating user's cash balance.", task.getException());
+                Database.databaseListener.notifyMessage("Cash Balance Decrease Unsuccessful.");
                 return;
             } else {
                 // Returns the cash balance of the user.
@@ -375,49 +320,48 @@ public class Database implements FinanceApiListener {
                 }
                 double currentCashBalance = Double.parseDouble(result);
                 // Get the new stock count of the buy request.
-                double newCashBalance = currentCashBalance - decreaseAmount;
+                double newCashBalance = currentCashBalance + changeAmount;
                 // Update cash balance.
                 cashBalanceReference.setValue(newCashBalance);
                 this.cashBalanceTracker = currentCashBalance;
-                databaseListener.notifyCashBalanceUpdate(newCashBalance);
+                Database.databaseListener.notifyCashBalanceUpdate(newCashBalance);
             }
         });
     }
 
     @Override
     public void notifyPriceUpdate(double price, String ticker) {
-        if(buyingStock){
-            try {
+        try {
+            if (transactionType.equals(TradeHistory.TransactionType.BUY)) {
                 this.buyStockBasedOnPrice(ticker, this.sharesToBuyTracker, price);
-            } catch (LoginException e) {
-                databaseListener.notifyMessage("There was an issue getting your user information for the buy request.");
-                return;
-            }
-        } else {
-            try {
+            } else {
                 this.sellStockBasedOnPrice(ticker, this.sharesToSellTracker, price);
-            } catch (LoginException e) {
-                databaseListener.notifyMessage("There was an issue getting your user information for the sell request.");
-                return;
             }
+        } catch(FirebaseAccessException e){
+            Database.databaseListener.notifyMessage("There was an issue getting your user information for the trade request.");
         }
     }
 
     @Override
     public void notifyMessage(String s) {
-        databaseListener.notifyMessage(s);
+        Database.databaseListener.notifyMessage(s);
     }
 
     /**
      * Adds the given value to the user's cash balance.
-     * @param moneyToAdd
+     * @param moneyToAdd    The amount of money to add to the cash balance.
      */
     public void addToCashBalance(double moneyToAdd) {
         try {
-            this.increaseUserCashBalance(Database.getCurrentUser(), moneyToAdd);
-        } catch (LoginException e) {
-            databaseListener.notifyMessage("There was an issue getting your user information...");
-            return;
+            this.increaseUserCashBalance(this.getCurrentUser(), moneyToAdd);
+        } catch (FirebaseAccessException e) {
+            Database.databaseListener.notifyMessage("There was an issue getting your user information.");
+        }
+    }
+
+    public class FirebaseAccessException extends Exception {
+        public FirebaseAccessException(String s) {
+            super(s);
         }
     }
 }
