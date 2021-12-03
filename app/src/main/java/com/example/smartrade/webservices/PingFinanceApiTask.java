@@ -16,10 +16,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.stream.Stream;
 
+/**
+ * Pings the Yahoo Finance API to get the price of a ticker.
+ */
 public class PingFinanceApiTask extends AsyncTask<String, Integer, JSONObject> {
 
     private final static String API_KEY = "ZIWwEJPxnx3gCZVF9f6QKa6cH8MV7J4o4S5aQeSp";
-    private FinanceApiListener listener;
+    private final FinanceApiListener listener;
 
     /**
      * Calls the web service with the given parameter.
@@ -30,15 +33,20 @@ public class PingFinanceApiTask extends AsyncTask<String, Integer, JSONObject> {
         task.execute(param);
     }
 
-    public PingFinanceApiTask(FinanceApiListener listener) {
+    /**
+     * Private constructor.
+     * @param listener
+     */
+    private PingFinanceApiTask(FinanceApiListener listener) {
         super();
         this.listener = listener;
     }
 
     @Override
     protected void onProgressUpdate(Integer... values) {
+        // TODO better?
         String loadingText = "Loading";
-//        listener.sendToast(loadingText);
+        listener.notifyMessage(loadingText);
     }
 
     @Override

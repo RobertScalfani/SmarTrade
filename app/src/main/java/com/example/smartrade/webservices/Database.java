@@ -7,13 +7,34 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.Date;
+
+/**
+ * USER_ID
+ *  - STOCK_TICKERS []
+ *      - TICKER (string)
+ *          - SHARES_OWNED
+ *              - shares_owned (double)
+ *          - HISTORY []
+ *              - date (date)
+ *              - buy/sell (boolean)
+ *              - #shares (int)
+ *              - cost_per_share (double)
+ *  - CASH_BALANCE
+ *      - cash_balance (double)
+ */
+
+
 /**
  * A class that handles all database transactions.
  */
 public class Database implements FinanceApiListener {
 
-    private static final String STOCKS_OWNED = "STOCKS_OWNED";
+    private static final String STOCK_TICKERS = "STOCK_TICKERS";
+    private static final String SHARES_OWNED = "SHARES_OWNED";
     private static final String CASH_BALANCE = "CASH_BALANCE";
+    private static final String TRADE_HISTORY = "TRADE_HISTORY";
+
     private static final FirebaseAuth mAuth = FirebaseAuth.getInstance();
     // Tracks the current buy or sell status of the user.
     boolean buyingStock;
@@ -105,8 +126,7 @@ public class Database implements FinanceApiListener {
      */
     private static DatabaseReference getUserReference(FirebaseUser user) {
         DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
-        return rootReference
-                .child(user.getUid());
+        return rootReference.child(user.getUid());
     }
 
     /**
@@ -128,7 +148,7 @@ public class Database implements FinanceApiListener {
     private static DatabaseReference getUserTickerReference(FirebaseUser user, String ticker) {
         DatabaseReference userReference = Database.getUserReference(user);
         return userReference
-                .child(STOCKS_OWNED)
+                .child(STOCK_TICKERS)
                 .child(ticker);
     }
 
@@ -165,9 +185,9 @@ public class Database implements FinanceApiListener {
 
         FirebaseUser user = Database.getCurrentUser();
 
-        DatabaseReference userTickerReference = Database.getUserTickerReference(user, ticker);
+        DatabaseReference userTickerSharesOwnedReference = Database.getUserTickerReference(user, ticker).child(SHARES_OWNED);
         // Update the current count for this sticker for this user.
-        userTickerReference.get().addOnCompleteListener(task -> {
+        userTickerSharesOwnedReference.get().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
                 Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
                 databaseListener.notifyMessage("Buy Unsuccessful.");
@@ -179,10 +199,14 @@ public class Database implements FinanceApiListener {
                 if (task.getResult().getValue() != null) {
                     currentSharesOwned = Double.parseDouble(result);
                 }
+
+                // Add transaction to the trade history.
+                TradeHistory newTrade = new TradeHistory(new Date(), TradeHistory.TransactionType.BUY, sharesToBuy, price);
+                this.addTradeHistory(ticker, newTrade);
                 // Get the new stock count of the buy request.
                 double newSharesCount = currentSharesOwned + sharesToBuy;
                 // Set the new shares count.
-                userTickerReference.setValue(newSharesCount);
+                userTickerSharesOwnedReference.setValue(newSharesCount);
                 databaseListener.notifyShareCountUpdate(newSharesCount);
                 // Update the user's cash balance.
                 this.decreaseUserCashBalance(user, (sharesToBuy * price));
@@ -198,6 +222,7 @@ public class Database implements FinanceApiListener {
      */
     public void sellStock(String ticker, double sharesToSell) throws LoginException {
         buyingStock = false;
+        this.sharesToSellTracker = sharesToSell;
 
         if(sharesToSell <= 0) {
             databaseListener.notifyMessage("Please enter a sell value greater than 0.");
@@ -208,11 +233,21 @@ public class Database implements FinanceApiListener {
             return;
         }
 
+        PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
+    }
+
+    /**
+     * Sends a request to sell a stock.
+     * @param ticker
+     * @param sharesToSell
+     */
+    public void sellStockBasedOnPrice(String ticker, double sharesToSell, double price) throws LoginException {
+
         FirebaseUser user = Database.getCurrentUser();
 
-        DatabaseReference userTickerReference = Database.getUserTickerReference(user, ticker);
+        DatabaseReference userTickerSharesOwnedReference = Database.getUserTickerReference(user, ticker).child(SHARES_OWNED);
         // Update the current count for this sticker for this user.
-        userTickerReference.get().addOnCompleteListener(task -> {
+        userTickerSharesOwnedReference.get().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
                 Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
                 databaseListener.notifyMessage("Sell Unsuccessful.");
@@ -221,7 +256,7 @@ public class Database implements FinanceApiListener {
                 // Return the number of shares owned by the user.
                 String result = String.valueOf(task.getResult().getValue());
                 if (task.getResult().getValue() == null) {
-                    databaseListener.notifyMessage("You do not own any shares of this stock.");
+                    databaseListener.notifyMessage("You do not own any shares of " + ticker + " stock.");
                     return;
                 }
                 double currentSharesOwned = Double.parseDouble(result);
@@ -231,14 +266,39 @@ public class Database implements FinanceApiListener {
                     databaseListener.notifyMessage("You do not own enough shares of this stock. You have " + currentSharesOwned + " shares and tried to sell " + sharesToSell + ".");
                     return;
                 }
+                // Sell stock and increase the user's cash balance.
+                double valueOfSell = price * this.sharesToSellTracker;
+                try {
+                    this.increaseUserCashBalance(Database.getCurrentUser(), valueOfSell);
+                } catch (LoginException e) {
+                    databaseListener.notifyMessage("There was an issue getting your user information...");
+                    return;
+                }
                 // Update shares count.
-                userTickerReference.setValue(newSharesCount);
+                userTickerSharesOwnedReference.setValue(newSharesCount);
                 databaseListener.notifyShareCountUpdate(newSharesCount);
-                // Ping the API to update cash balance.
-                this.sharesToSellTracker = sharesToSell;
-                PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
+                // Add transaction to trade history.
+                TradeHistory newTrade = new TradeHistory(new Date(), TradeHistory.TransactionType.SELL, sharesToSell, price);
+                this.addTradeHistory(ticker, newTrade);
             }
         });
+    }
+
+    /**
+     * Adds the given trade history to the given ticker for the current user.
+     * @param ticker
+     * @param newTrade
+     */
+    private void addTradeHistory(String ticker, TradeHistory newTrade) {
+        FirebaseUser user = null;
+        try {
+            user = Database.getCurrentUser();
+        } catch (LoginException e) {
+            e.printStackTrace();
+        }
+
+        DatabaseReference userTickerTradeHistoryReference = Database.getUserTickerReference(user, ticker).child(TRADE_HISTORY);
+        userTickerTradeHistoryReference.child(newTrade.getDate()).setValue(newTrade);
     }
 
     /**
@@ -249,8 +309,8 @@ public class Database implements FinanceApiListener {
         DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
         rootReference
                 .child(user.getUid())
-                .child(STOCKS_OWNED)
                 .child(ticker)
+                .child(SHARES_OWNED)
                 .get().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
                 Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
@@ -326,20 +386,18 @@ public class Database implements FinanceApiListener {
 
     @Override
     public void notifyPriceUpdate(double price, String ticker) {
-
         if(buyingStock){
             try {
                 this.buyStockBasedOnPrice(ticker, this.sharesToBuyTracker, price);
             } catch (LoginException e) {
-                databaseListener.notifyMessage("There was an issue getting your user information...");
+                databaseListener.notifyMessage("There was an issue getting your user information for the buy request.");
                 return;
             }
         } else {
-            double valueOfSell = price * this.sharesToSellTracker;
             try {
-                this.increaseUserCashBalance(Database.getCurrentUser(), valueOfSell);
+                this.sellStockBasedOnPrice(ticker, this.sharesToSellTracker, price);
             } catch (LoginException e) {
-                databaseListener.notifyMessage("There was an issue getting your user information...");
+                databaseListener.notifyMessage("There was an issue getting your user information for the sell request.");
                 return;
             }
         }
