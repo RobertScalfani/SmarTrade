@@ -1,6 +1,5 @@
 package com.example.smartrade;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -12,13 +11,6 @@ import android.widget.Toast;
 
 import com.example.smartrade.webservices.Database;
 import com.example.smartrade.webservices.DatabaseListener;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 public class LoginActivity extends AppCompatActivity implements DatabaseListener {
 
@@ -42,7 +34,7 @@ public class LoginActivity extends AppCompatActivity implements DatabaseListener
                     Database.getDatabase().promptLogin(submittedEmail, PASSWORD, this);
                 }
                 if(validateLogin()){
-                    Intent intent = new Intent(LoginActivity.this, Dashboard.class);
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
                 }
