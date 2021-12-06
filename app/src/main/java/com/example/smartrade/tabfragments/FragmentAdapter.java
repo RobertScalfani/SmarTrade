@@ -1,4 +1,4 @@
-package com.example.smartrade;
+package com.example.smartrade.tabfragments;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;

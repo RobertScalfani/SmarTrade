@@ -8,6 +8,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * A class that handles all database transactions.
@@ -169,7 +170,7 @@ public class Database implements FinanceApiListener {
                 double newSharesCount = currentSharesOwned + sharesToBuy;
                 // Set the new shares count.
                 userTickerSharesOwnedReference.setValue(newSharesCount);
-                databaseListener.notifyShareCountUpdate(newSharesCount);
+                databaseListener.notifyShareCountUpdate(ticker, newSharesCount);
                 // Update the user's cash balance.
                 this.decreaseUserCashBalance(user, (sharesToBuy * price));
             }
@@ -232,7 +233,7 @@ public class Database implements FinanceApiListener {
                 this.increaseUserCashBalance(user, valueOfSell);
                 // Update shares count.
                 userTickerSharesOwnedReference.setValue(newSharesCount);
-                Database.databaseListener.notifyShareCountUpdate(newSharesCount);
+                Database.databaseListener.notifyShareCountUpdate(ticker, newSharesCount);
                 // Add transaction to trade history.
                 TradeHistory newTrade = new TradeHistory(new Date(), TradeHistory.TransactionType.SELL, sharesToSell, price);
                 this.addTradeHistory(user, ticker, newTrade);
@@ -278,7 +279,7 @@ public class Database implements FinanceApiListener {
                 String result = String.valueOf(task.getResult().getValue());
                 if (task.getResult().getValue() != null) {
                     double sharesOwned = Double.parseDouble(result);
-                    databaseListener.notifyShareCountUpdate(sharesOwned);
+                    databaseListener.notifyShareCountUpdate(ticker, sharesOwned);
                 }
             }
         });
@@ -415,6 +416,42 @@ public class Database implements FinanceApiListener {
 
     public boolean validateLogin() {
         return mAuth.getCurrentUser() != null;
+    }
+
+    /**
+     * Notifies the listener with the list of stocks owned for this user.
+     */
+    public void requestStockList() {
+
+        FirebaseUser user = null;
+        try {
+            user = this.getCurrentUser();
+        } catch (FirebaseAccessException e) {
+            e.printStackTrace();
+        }
+
+        DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+        rootReference
+                .child(user.getUid())
+                .child(STOCK_TICKERS)
+                .get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
+                databaseListener.notifyMessage("Error updating user stock owned.");
+            } else {
+                // Update the number of shares owned by the user.
+                Map<String, Object> result = (Map<String, Object>) task.getResult().getValue();
+                int position = 0;
+                for(String currentTicker : result.keySet()){
+                    long sharesOwned = (long) ((Map<String, Object>) result.get(currentTicker)).get(SHARES_OWNED);
+                    databaseListener.notifyStockList(currentTicker, sharesOwned, position);
+                    position++;
+                }
+                if (task.getResult().getValue() != null) {
+//                    databaseListener.notifyStockList(result);
+                }
+            }
+        });
     }
 
     public static class FirebaseAccessException extends Exception {

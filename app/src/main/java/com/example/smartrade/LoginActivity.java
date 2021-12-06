@@ -83,7 +83,12 @@ public class LoginActivity extends AppCompatActivity implements DatabaseListener
     }
 
     @Override
-    public void notifyShareCountUpdate(double newSharesCount) {
+    public void notifyShareCountUpdate(String ticker, double newSharesCount) {
 //        throw new UnsupportedOperationException("Login activity does not support share counts.");
+    }
+
+    @Override
+    public void notifyStockList(String result, double sharesOwned, int position) {
+
     }
 }

@@ -1,4 +1,4 @@
-package com.example.smartrade;
+package com.example.smartrade.tabfragments;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
+import com.example.smartrade.R;
 import com.example.smartrade.webservices.Database;
 import com.example.smartrade.webservices.DatabaseListener;
 import com.example.smartrade.webservices.FinanceApiListener;
@@ -25,25 +26,14 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_trade,container, false);
 
-        /**
-         * TODO
-         * Things to add:
-         * - Set up UI
-         * -    - Main tabs
-         */
-
         Button stockInfoButton = rootView.findViewById(R.id.get_price_btn);
         stockInfoButton.setOnClickListener(
-                v -> {
-                    this.updateTickerInfo();
-                }
+                v -> {this.updateTickerInfo();}
         );
 
         Button addMoneyBtn = rootView.findViewById(R.id.getMoney);
         addMoneyBtn.setOnClickListener(
-                v -> {
-                    this.addToCashBalance(10000);
-                }
+                v -> {this.addToCashBalance(10000);}
         );
 
         // Force-initialize the database.
@@ -56,17 +46,13 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
         // Buy Button
         Button buyButton = rootView.findViewById(R.id.buyBtn);
         buyButton.setOnClickListener(
-                v -> {
-                    this.buyStock(this.getCurrentTicker(), this.getSharesToBuySell());
-                }
+                v -> {this.buyStock(this.getCurrentTicker(), this.getSharesToBuySell());}
         );
 
         // Sell Button
         Button sellButton = rootView.findViewById(R.id.sellBtn);
         sellButton.setOnClickListener(
-                v -> {
-                    this.sellStock(this.getCurrentTicker(), this.getSharesToBuySell());
-                }
+                v -> {this.sellStock(this.getCurrentTicker(), this.getSharesToBuySell());}
         );
 
         // Logout Button
@@ -182,9 +168,14 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     }
 
     @Override
-    public void notifyShareCountUpdate(double newSharesCount) {
+    public void notifyShareCountUpdate(String ticker, double newSharesCount) {
         TextView sharesOwnedText = getView().findViewById(R.id.stockOwned);
         sharesOwnedText.setText("Shares Owned: " + newSharesCount);
+    }
+
+    @Override
+    public void notifyStockList(String result, double sharesOwned, int position) {
+
     }
 
     @Override

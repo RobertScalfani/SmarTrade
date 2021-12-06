@@ -39,4 +39,7 @@
     <string name="gainlossP">0.00</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="shares_owned_hint">Shares Owned: -</string>
+    <string name="ticker_hint">Ticker: -</string>
+    <string name="pending_request_string">Pending</string>
 </resources>
