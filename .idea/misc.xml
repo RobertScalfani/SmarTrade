@@ -9,10 +9,12 @@
         <entry key="..\:/Users/robis/AndroidStudioProjects/SmarTrade/app/src/main/res/layout/fragment_second.xml" value="0.328125" />
         <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/layout/activity_dashboard.xml" value="0.5" />
         <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/layout/activity_trade_history.xml" value="0.33" />
         <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/layout/fragment_dashboard.xml" value="0.33125" />
         <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/layout/fragment_leaderboard.xml" value="0.36302083333333335" />
         <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/layout/fragment_trade.xml" value="0.36302083333333335" />
         <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/layout/stock_item_card.xml" value="0.1899696048632219" />
+        <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/layout/trade_history_item_card.xml" value="0.5" />
         <entry key="..\:/Users/robis/StudioProjects/SmarTrade/app/src/main/res/menu/bottom_nav.xml" value="0.39166666666666666" />
       </map>
     </option>

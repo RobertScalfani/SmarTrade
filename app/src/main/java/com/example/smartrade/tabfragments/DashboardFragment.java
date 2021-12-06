@@ -17,10 +17,12 @@ import android.widget.Toast;
 import com.example.smartrade.LoginActivity;
 import com.example.smartrade.R;
 import com.example.smartrade.recyclerviews.AbstractRecyclerViewAdapter;
+import com.example.smartrade.recyclerviews.IItemClickListener;
 import com.example.smartrade.recyclerviews.stocks.StockItemCard;
 import com.example.smartrade.recyclerviews.stocks.StockRecyclerViewAdapter;
 import com.example.smartrade.webservices.Database;
 import com.example.smartrade.webservices.DatabaseListener;
+import com.example.smartrade.webservices.TradeHistory;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
@@ -57,12 +59,11 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
         // Update the current Cash Balance.
         Database.getDatabase().addToCashBalance(0.0);
 
-        this.updateRecyclerView(this.getView());
+        this.updateRecyclerView();
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_dashboard, container, false);
 
@@ -82,16 +83,24 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
             Toast.makeText(this.getContext(), signOutMsg, Toast.LENGTH_SHORT).show();
         });
 
-        return rootView;
-    }
-
-    private void updateRecyclerView(View view){
-        this.stockItemList = new ArrayList<>();
-        RecyclerView recyclerView = view.findViewById(R.id.stockOwnedRecyclerView);
+        RecyclerView recyclerView = rootView.findViewById(R.id.stockOwnedRecyclerView);
         this.recyclerViewAdapter = new StockRecyclerViewAdapter(this.stockItemList);
         recyclerView.setAdapter(recyclerViewAdapter);
         RecyclerView.LayoutManager recyclerLayoutManger = new LinearLayoutManager(this.getContext());
         recyclerView.setLayoutManager(recyclerLayoutManger);
+        IItemClickListener listener = (position, applicationContext) -> {
+            stockItemList.get(position).onItemClick(position, this.getActivity());
+            recyclerViewAdapter.notifyItemChanged(position);
+        };
+        recyclerViewAdapter.setOnItemClickListener(listener);
+
+        return rootView;
+    }
+
+    private void updateRecyclerView(){
+        int listSize = this.stockItemList.size();
+        this.stockItemList.clear();
+        this.recyclerViewAdapter.notifyItemRangeRemoved(0, listSize);
 
         // Ask the database to populate the list.
         Database.getDatabase().requestStockList();
@@ -114,5 +123,10 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
     public void notifyStockList(String stock, double sharesOwned, int position) {
         this.stockItemList.add(new StockItemCard(stock, sharesOwned));
         recyclerViewAdapter.notifyItemInserted(position);
+    }
+
+    @Override
+    public void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position) {
+
     }
 }

@@ -12,8 +12,8 @@ import com.example.smartrade.recyclerviews.IItemClickListener;
 
 public class StockRecyclerViewHolder extends AbstractRecyclerViewHolder {
 
-    private TextView ticker;
-    private TextView sharesOwned;
+    private final TextView ticker;
+    private final TextView sharesOwned;
 
     public StockRecyclerViewHolder(View itemView, IItemClickListener listener) {
         super(itemView);
@@ -23,7 +23,9 @@ public class StockRecyclerViewHolder extends AbstractRecyclerViewHolder {
         itemView.setOnClickListener(v -> {
             if (listener != null) {
                 int position = getLayoutPosition();
+                System.out.println("Check position");
                 if (position != RecyclerView.NO_POSITION) {
+                    System.out.println("There is a position position");
                     listener.onItemClick(position, null);
                 }
             }

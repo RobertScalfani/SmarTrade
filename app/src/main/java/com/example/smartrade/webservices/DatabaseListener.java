@@ -30,4 +30,11 @@ public interface DatabaseListener {
      * @param position
      */
     void notifyStockList(String result, double sharesOwned, int position);
+
+    /**
+     * Notifies the listener of a new trade history object to display.
+     * @param tradeHistory
+     * @param position
+     */
+    void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position);
 }

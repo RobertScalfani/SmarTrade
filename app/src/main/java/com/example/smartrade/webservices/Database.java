@@ -2,6 +2,7 @@ package com.example.smartrade.webservices;
 
 import android.util.Log;
 
+import com.example.smartrade.recyclerviews.tradehistory.TradeHistoryItemCard;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -164,7 +165,7 @@ public class Database implements FinanceApiListener {
                 }
 
                 // Add transaction to the trade history.
-                TradeHistory newTrade = new TradeHistory(new Date(), TradeHistory.TransactionType.BUY, sharesToBuy, price);
+                TradeHistory newTrade = new TradeHistory((new Date()).toString(), TradeHistory.TransactionType.BUY.toString(), sharesToBuy, price);
                 this.addTradeHistory(user, ticker, newTrade);
                 // Get the new stock count of the buy request.
                 double newSharesCount = currentSharesOwned + sharesToBuy;
@@ -235,7 +236,7 @@ public class Database implements FinanceApiListener {
                 userTickerSharesOwnedReference.setValue(newSharesCount);
                 Database.databaseListener.notifyShareCountUpdate(ticker, newSharesCount);
                 // Add transaction to trade history.
-                TradeHistory newTrade = new TradeHistory(new Date(), TradeHistory.TransactionType.SELL, sharesToSell, price);
+                TradeHistory newTrade = new TradeHistory((new Date()).toString(), TradeHistory.TransactionType.SELL.toString(), sharesToSell, price);
                 this.addTradeHistory(user, ticker, newTrade);
             }
         });
@@ -452,6 +453,43 @@ public class Database implements FinanceApiListener {
                 }
             }
         });
+    }
+
+    public void requestTickerHistory(String ticker) {
+
+        FirebaseUser user = null;
+        try {
+            user = this.getCurrentUser();
+        } catch (FirebaseAccessException e) {
+            e.printStackTrace();
+        }
+
+        DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+        rootReference
+                .child(user.getUid())
+                .child(STOCK_TICKERS)
+                .child(ticker)
+                .child(TRADE_HISTORY)
+                .get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                Log.e("FIREBASE", "Error getting user trade history data", task.getException());
+                databaseListener.notifyMessage("Error updating user trade history.");
+            } else {
+                // Update the number of shares owned by the user.
+                Map<String, Object> result = (Map<String, Object>) task.getResult().getValue();
+                int position = 0;
+                for(Object currentHistory : result.values()){
+                    Map<String, Object> tradeHistoryMap = (Map<String, Object>) currentHistory;
+                    TradeHistory tradeHistory = new TradeHistory((String) tradeHistoryMap.get("date"), (String) tradeHistoryMap.get("transactionType"), (long) tradeHistoryMap.get("numberOfShares"), (double) tradeHistoryMap.get("costPerShare"));
+                    databaseListener.notifyTradeHistory(ticker, tradeHistory, position);
+                    position++;
+                }
+                if (task.getResult().getValue() != null) {
+//                    databaseListener.notifyStockList(result);
+                }
+            }
+        });
+
     }
 
     public static class FirebaseAccessException extends Exception {

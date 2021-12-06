@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.example.smartrade.webservices.Database;
 import com.example.smartrade.webservices.DatabaseListener;
+import com.example.smartrade.webservices.TradeHistory;
 
 public class LoginActivity extends AppCompatActivity implements DatabaseListener {
 
@@ -89,6 +90,11 @@ public class LoginActivity extends AppCompatActivity implements DatabaseListener
 
     @Override
     public void notifyStockList(String result, double sharesOwned, int position) {
+
+    }
+
+    @Override
+    public void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position) {
 
     }
 }

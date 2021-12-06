@@ -42,4 +42,5 @@
     <string name="shares_owned_hint">Shares Owned: -</string>
     <string name="ticker_hint">Ticker: -</string>
     <string name="pending_request_string">Pending</string>
+    <string name="title_activity_trade_history">TradeHistoryActivity</string>
 </resources>

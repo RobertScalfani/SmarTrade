@@ -17,6 +17,7 @@ import com.example.smartrade.webservices.Database;
 import com.example.smartrade.webservices.DatabaseListener;
 import com.example.smartrade.webservices.FinanceApiListener;
 import com.example.smartrade.webservices.PingFinanceApiTask;
+import com.example.smartrade.webservices.TradeHistory;
 
 import java.util.Locale;
 
@@ -175,6 +176,11 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
 
     @Override
     public void notifyStockList(String result, double sharesOwned, int position) {
+
+    }
+
+    @Override
+    public void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position) {
 
     }
 

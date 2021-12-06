@@ -9,7 +9,7 @@ import java.util.Date;
 public class TradeHistory implements Serializable {
 
     public final  String tradeDate;
-    public final  TransactionType transactionType;
+    public final  String transactionType;
     public final  double numberOfShares;
     public final  double costPerShare;
 
@@ -20,8 +20,8 @@ public class TradeHistory implements Serializable {
      * @param numberOfShares
      * @param costPerShare
      */
-    public TradeHistory(Date tradeDate, TransactionType transactionType, double numberOfShares, double costPerShare){
-        this.tradeDate = tradeDate.toString();
+    public TradeHistory(String tradeDate, String transactionType, double numberOfShares, double costPerShare){
+        this.tradeDate = tradeDate;
         this.transactionType = transactionType;
         this.numberOfShares = numberOfShares;
         this.costPerShare = costPerShare;
