@@ -440,16 +440,17 @@ public class Database implements FinanceApiListener {
                 Log.e("FIREBASE", "Error getting user stock owned data", task.getException());
                 databaseListener.notifyMessage("Error updating user stock owned.");
             } else {
-                // Update the number of shares owned by the user.
-                Map<String, Object> result = (Map<String, Object>) task.getResult().getValue();
-                int position = 0;
-                for(String currentTicker : result.keySet()){
-                    long sharesOwned = (long) ((Map<String, Object>) result.get(currentTicker)).get(SHARES_OWNED);
-                    databaseListener.notifyStockList(currentTicker, sharesOwned, position);
-                    position++;
-                }
-                if (task.getResult().getValue() != null) {
-//                    databaseListener.notifyStockList(result);
+                if(task.getResult().getValue() != null) {
+                    // Update the number of shares owned by the user.
+                    Map<String, Object> result = (Map<String, Object>) task.getResult().getValue();
+                    int position = 0;
+                    for(String currentTicker : result.keySet()){
+                        long sharesOwned = (long) ((Map<String, Object>) result.get(currentTicker)).get(SHARES_OWNED);
+                        databaseListener.notifyStockList(currentTicker, sharesOwned, position);
+                        position++;
+                    }
+                } else {
+                    // No data yet, do nothing.
                 }
             }
         });
