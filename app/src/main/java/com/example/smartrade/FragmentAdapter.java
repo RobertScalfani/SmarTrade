@@ -18,12 +18,14 @@ public class FragmentAdapter extends FragmentStateAdapter {
         switch (position) {
             case 1:
                 return new TradeFragment();
+            case 2:
+                return new LeaderboardFragment();
         }
         return new DashboardFragment();
     }
 
     @Override
     public int getItemCount() {
-        return 2;
+        return 3;
     }
 }

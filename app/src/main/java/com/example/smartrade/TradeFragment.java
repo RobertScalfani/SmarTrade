@@ -1,6 +1,5 @@
 package com.example.smartrade;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.view.LayoutInflater;
@@ -17,7 +16,6 @@ import com.example.smartrade.webservices.Database;
 import com.example.smartrade.webservices.DatabaseListener;
 import com.example.smartrade.webservices.FinanceApiListener;
 import com.example.smartrade.webservices.PingFinanceApiTask;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Locale;
 
@@ -84,6 +82,14 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
 //        });
 
         return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Database.initializeDatabase(this);
+        // Update the current Cash Balance.
+        Database.getDatabase().addToCashBalance(0.0);
     }
 
     private void addToCashBalance(double moneyToAdd) {
@@ -172,7 +178,7 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     @Override
     public void notifyCashBalanceUpdate(double newCashBalance) {
         TextView cashBalanceMainActivity = getView().findViewById(R.id.CashBalanceMain);
-        cashBalanceMainActivity.setText("Cash Balance: " + newCashBalance);
+        cashBalanceMainActivity.setText("Cash Balance: " + String.format("%.2f",newCashBalance));
     }
 
     @Override

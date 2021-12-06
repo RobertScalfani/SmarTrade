@@ -12,9 +12,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.smartrade.webservices.Database;
+import com.example.smartrade.webservices.DatabaseListener;
 import com.google.firebase.auth.FirebaseAuth;
 
-public class DashboardFragment extends Fragment {
+public class DashboardFragment extends Fragment implements DatabaseListener {
+
+    TextView portfolioValue;
+    TextView positionValue;
+    TextView cashBalance;
+    TextView gainLossDollar;
+    TextView gainLossPercentage;
 
     public DashboardFragment() {
         // Required empty public constructor
@@ -23,7 +31,17 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Update the current Cash Balance.
+        Database.initializeDatabase(this);
+        Database.getDatabase().addToCashBalance(0.0);
+    }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        Database.initializeDatabase(this);
+        // Update the current Cash Balance.
+        Database.getDatabase().addToCashBalance(0.0);
     }
 
     @Override
@@ -32,11 +50,11 @@ public class DashboardFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_dashboard, container, false);
 
-        TextView portfolioValue = rootView.findViewById(R.id.textViewPortfolioValue);
-        TextView positionValue = rootView.findViewById(R.id.textviewPositionValue);
-        TextView cashBalance = rootView.findViewById(R.id.cashBalance);
-        TextView gainLossDollar = rootView.findViewById(R.id.textViewGainlossD);
-        TextView gainLossPercentage = rootView.findViewById(R.id.textViewGainlossP);
+        this.portfolioValue = rootView.findViewById(R.id.textViewPortfolioValue);
+        this.positionValue = rootView.findViewById(R.id.textviewPositionValue);
+        this.cashBalance = rootView.findViewById(R.id.cashBalance);
+        this.gainLossDollar = rootView.findViewById(R.id.textViewGainlossD);
+        this.gainLossPercentage = rootView.findViewById(R.id.textViewGainlossP);
 
         Button dashLogoutBtn = rootView.findViewById(R.id.dash_logout_btn);
         dashLogoutBtn.setOnClickListener(v -> {
@@ -49,5 +67,19 @@ public class DashboardFragment extends Fragment {
         });
 
         return rootView;
+    }
+
+    @Override
+    public void notifyMessage(String message) {
+    }
+
+    @Override
+    public void notifyCashBalanceUpdate(double newCashBalance) {
+        this.cashBalance.setText(String.format("%.2f",newCashBalance));
+    }
+
+    @Override
+    public void notifyShareCountUpdate(double newSharesCount) {
+
     }
 }
