@@ -35,7 +35,7 @@ import com.google.android.gms.tasks.Task;
 
 import java.util.List;
 
-public class LeaderboardFragment extends Fragment implements DatabaseListener {
+public class LeaderboardFragment extends Fragment implements DatabaseListener, LocationListener {
 
     Button getLeaderboardBtn;
     FusedLocationProviderClient client;
@@ -54,48 +54,19 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_leaderboard, container, false);
-        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        Criteria locationCriteria = new Criteria();
-        locationCriteria.setAccuracy(Criteria.ACCURACY_FINE);
-
-        //Initialize Location Listener
-        LocationListener locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(@NonNull Location location) {
-                userLocation = location;
-                if(userLocation != null) {
-                    longitude = userLocation.getLongitude();
-                    latitude = userLocation.getLatitude();
-                    Log.i("LAT", String.valueOf(latitude));
-                    Log.i("Loc", "Location not null!");
-                }
-                else {
-                    Log.e("LOC", "NULL");
-                }
-            }
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
-            @Override
-            public void onProviderEnabled(String provider) {}
-            @Override
-            public void onProviderDisabled(String provider) {}
-        };
-
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0,0,locationListener);
-
         // Database init
         Database.initializeDatabase(this);
-
         getLeaderboardBtn = (Button) rootView.findViewById(R.id.leaderboardBtn);
-
         getLeaderboardBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.i("LAT", String.valueOf(latitude));
+                Log.i("Long", String.valueOf(longitude));
                 Log.i("Loc", "Location not null!");
             }
         });
 
+        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,0, (android.location.LocationListener) this);
 
         return rootView;
     }
@@ -128,5 +99,38 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener {
     }
 
 
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        if(location == null){
 
+        } else {
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+        }
+    }
+
+    @Override
+    public void onLocationChanged(@NonNull List<Location> locations) {
+
+    }
+
+    @Override
+    public void onFlushComplete(int requestCode) {
+
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(@NonNull String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(@NonNull String provider) {
+
+    }
 }
