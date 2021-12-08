@@ -2,11 +2,17 @@ package com.example.smartrade.webservices;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.example.smartrade.recyclerviews.tradehistory.TradeHistoryItemCard;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Date;
 import java.util.Map;
@@ -315,6 +321,71 @@ public class Database implements FinanceApiListener {
         DatabaseReference coordinateReference = Database.getUserReference(user).child(COORDINATES);
         coordinateReference.child("LONGITUDE").setValue(longitude);
         coordinateReference.child("LATITUDE").setValue(latitude);
+    }
+
+    /**
+     * Calculates the distance between two users in miles
+     * @param lat1
+     * @param lon1
+     * @param lat2
+     * @param lon2
+     * @return
+     */
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double theta = lon1 - lon2;
+        double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+        dist = Math.acos(dist);
+        dist = rad2deg(dist);
+        dist = dist * 60 * 1.1515;
+
+        return (dist);
+    }
+
+    private double deg2rad(double deg) {
+        return (deg * Math.PI / 180.0);
+    }
+
+    private double rad2deg(double rad) {
+        return (rad * 180.0 / Math.PI);
+    }
+
+
+    public void generateLeaderboardRankings() throws FirebaseAccessException {
+        FirebaseUser user = this.getCurrentUser();
+        DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+        Log.i("CURRENT USER", user.getUid());
+
+        //TODO: Get user Latitude and Longitude
+        //TODO: For users within 100 mi of user, calculate total portfolio balances and add them to ArrayList
+        //TODO: Sort the arrayList, and populate the leaderboard
+
+        //Grabs data from each document
+        rootReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot node : snapshot.getChildren()){
+                    String userId = node.getKey();
+                    String cashBal = node.child(CASH_BALANCE).getValue().toString();
+                    String longitude = String.valueOf(node.child(COORDINATES).child("LONGITUDE").getValue());
+                    String latitude = String.valueOf(node.child(COORDINATES).child("LATITUDE").getValue());
+
+                    Log.i("FIREBASE", userId);
+                    Log.i("FIREBASE", String.valueOf(cashBal));
+                    Log.i("FIREBASE", longitude);
+                    Log.i("FIREBASE", latitude);
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+
+
+
     }
 
     /**

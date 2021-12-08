@@ -62,6 +62,7 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
             public void onClick(View view) {
                 try {
                     Database.getDatabase().addUserCoordinates(longitude, latitude);
+                    Database.getDatabase().generateLeaderboardRankings();
                 } catch (Database.FirebaseAccessException e) {
                     e.printStackTrace();
                 }
