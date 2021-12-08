@@ -17,4 +17,6 @@ public interface FinanceApiListener {
      * @param s The message.
      */
     void notifyMessage(String s);
+
+
 }

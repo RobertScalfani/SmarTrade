@@ -4,23 +4,26 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.example.smartrade.recyclerviews.tradehistory.TradeHistoryItemCard;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * A class that handles all database transactions.
  */
 public class Database implements FinanceApiListener {
+
 
     private static final String STOCK_TICKERS = "STOCK_TICKERS";
     private static final String SHARES_OWNED = "SHARES_OWNED";
@@ -123,9 +126,13 @@ public class Database implements FinanceApiListener {
                 .child(ticker);
     }
 
+
+
+
     /**
      * Sends a request to buy stock.
      */
+
     public void buyStock(String ticker, double sharesToBuy) {
         transactionType = TradeHistory.TransactionType.BUY;
         this.sharesToBuyTracker = sharesToBuy;
@@ -341,41 +348,82 @@ public class Database implements FinanceApiListener {
         return (dist);
     }
 
+    //Supporting function for calculateDistance
     private double deg2rad(double deg) {
         return (deg * Math.PI / 180.0);
     }
-
+    //Supporting function for calculateDistance
     private double rad2deg(double rad) {
         return (rad * 180.0 / Math.PI);
     }
 
-
+    /**
+     * Generates the leaderboard information
+     * @throws FirebaseAccessException
+     */
     public void generateLeaderboardRankings() throws FirebaseAccessException {
-        FirebaseUser user = this.getCurrentUser();
-        DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
-        Log.i("CURRENT USER", user.getUid());
-
-        //TODO: Get user Latitude and Longitude
-        //TODO: For users within 100 mi of user, calculate total portfolio balances and add them to ArrayList
-        //TODO: Sort the arrayList, and populate the leaderboard
-
         //Grabs data from each document
-        rootReference.addValueEventListener(new ValueEventListener() {
+        DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+        rootReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for(DataSnapshot node : snapshot.getChildren()){
-                    String userId = node.getKey();
-                    String cashBal = node.child(CASH_BALANCE).getValue().toString();
-                    String longitude = String.valueOf(node.child(COORDINATES).child("LONGITUDE").getValue());
-                    String latitude = String.valueOf(node.child(COORDINATES).child("LATITUDE").getValue());
+                Iterable<DataSnapshot> children = snapshot.getChildren();
+                HashMap<String, HashMap<String, String>> prepForLeaderboard = new HashMap<String, HashMap<String, String>>();
+                //Iterates over all of our documents
+                for(DataSnapshot child : children){
+                    HashMap<String, String> userValues = new HashMap<String, String>();
+                    //Get User Id
+                    String userId = child.getKey();
+                    //Create Hashmap of user children so we can access firebase data
+                    HashMap<String, Object> userObj = (HashMap<String, Object>) child.getValue();
+                    //Add Cash Balance to userValues
+                    userValues.put("CASH_BALANCE", userObj.get(CASH_BALANCE).toString());
+                    //Add Coordinates to userValues
+                    if(userObj.get(COORDINATES) != null){
+                        HashMap<String, Object> coordinates = (HashMap<String, Object>) userObj.get(COORDINATES);
+                        userValues.put("LATITUDE", coordinates.get("LATITUDE").toString());
+                        userValues.put("LONGITUDE", coordinates.get("LONGITUDE").toString());
 
-                    Log.i("FIREBASE", userId);
-                    Log.i("FIREBASE", String.valueOf(cashBal));
-                    Log.i("FIREBASE", longitude);
-                    Log.i("FIREBASE", latitude);
+                    }
+                    //Add Total Stock Value to userValues
+                    if(userObj.get(STOCK_TICKERS) != null){
+                        HashMap<String, Object> stocks = (HashMap<String, Object>) userObj.get(STOCK_TICKERS);
+                        for(Map.Entry<String, Object> stock : stocks.entrySet()){
+                            String ticker;
+                            ticker = stock.getKey();
+                            HashMap<String, Object> stockInfo = (HashMap<String, Object>) stock.getValue();
+                            Integer quantity = Integer.parseInt(stockInfo.get("SHARES_OWNED").toString());
 
+                            //Get Price Here (For Ticker, Quantity * Price)
+                            //In db, we ping finance API
+                                //in db, declare notifyPriceForTicker()
+                            //within API, things happen
+                            //API pings Database.notifyPriceUpdate()
+                            //Database now has the price
+
+                        }
+                    }
+                    Log.i("HASHMAP", userValues.keySet().toString());
+                    //Add userValues to our leaderboard ready hashmap
+                    prepForLeaderboard.put(userId, userValues);
                 }
-            }
+
+                //Creates an list of users ranked by total portfolio value
+                    //TODO: Make this total portfolio value and not cash balance
+                HashMap<String, Double> usersPortfolioValue = new HashMap<String, Double>();
+                for(Map.Entry<String, HashMap<String, String>> user : prepForLeaderboard.entrySet()){
+                    String uid = user.getKey();
+                    String cashBalStr = user.getValue().get("CASH_BALANCE");
+                    usersPortfolioValue.put(uid, Double.parseDouble(cashBalStr));
+
+                    }
+                Stream<Map.Entry<String,Double>> sorted =
+                        usersPortfolioValue.entrySet().stream()
+                                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+                }
+
+
+
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
