@@ -149,7 +149,7 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     }
 
     @Override
-    public void notifyPriceUpdate(double price, String ticker) {
+    public void notifyPriceUpdate(double price, String ticker, String longName) {
         // Update ticker.
         TextView displayTicker = getView().findViewById(R.id.display_ticker);
         displayTicker.setText(ticker);
@@ -158,6 +158,9 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
         // Update price.
         TextView displayPrice = getView().findViewById(R.id.tickerPrice);
         displayPrice.setText("$" + price);
+
+        TextView longNameDisplay = getView().findViewById(R.id.companyName);
+        longNameDisplay.setText(longName);
     }
 
     @Override
