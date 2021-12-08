@@ -1,10 +1,12 @@
 package com.example.smartrade.webservices;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.example.smartrade.recyclerviews.tradehistory.TradeHistoryItemCard;
+import com.example.smartrade.tabfragments.TradeFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -203,6 +205,7 @@ public class Database implements FinanceApiListener {
             return;
         }
 
+
         PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
     }
 
@@ -246,6 +249,7 @@ public class Database implements FinanceApiListener {
                 TradeHistory newTrade = new TradeHistory((new Date()).toString(), TradeHistory.TransactionType.SELL.toString(), sharesToSell, price);
                 this.addTradeHistory(user, ticker, newTrade);
             }
+            databaseListener.notifyMessage("Sell order confirmed");
         });
     }
 
