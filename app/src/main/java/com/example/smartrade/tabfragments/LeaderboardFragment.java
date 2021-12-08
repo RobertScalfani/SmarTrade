@@ -60,8 +60,11 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
         getLeaderboardBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.i("Long", String.valueOf(longitude));
-                Log.i("Loc", "Location not null!");
+                try {
+                    Database.getDatabase().addUserCoordinates(longitude, latitude);
+                } catch (Database.FirebaseAccessException e) {
+                    e.printStackTrace();
+                }
             }
         });
 

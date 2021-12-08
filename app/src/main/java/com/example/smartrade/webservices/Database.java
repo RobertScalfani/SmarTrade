@@ -20,6 +20,7 @@ public class Database implements FinanceApiListener {
     private static final String SHARES_OWNED = "SHARES_OWNED";
     private static final String CASH_BALANCE = "CASH_BALANCE";
     private static final String TRADE_HISTORY = "TRADE_HISTORY";
+    private static final String COORDINATES = "COORDINATES";
 
     private static final FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
@@ -302,6 +303,18 @@ public class Database implements FinanceApiListener {
      */
     private void decreaseUserCashBalance(FirebaseUser user, double decreaseAmount) {
         this.changeUserCashBalance(user, -decreaseAmount);
+    }
+
+    /**
+     * Adds the user's location.
+     * @param longitude Longitude returned by location service.
+     * @param latitude Latitude returned by location service.
+     */
+    public void addUserCoordinates(double longitude, double latitude) throws FirebaseAccessException {
+        FirebaseUser user = this.getCurrentUser();
+        DatabaseReference coordinateReference = Database.getUserReference(user).child(COORDINATES);
+        coordinateReference.child("LONGITUDE").setValue(longitude);
+        coordinateReference.child("LATITUDE").setValue(latitude);
     }
 
     /**
