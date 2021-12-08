@@ -3,6 +3,7 @@ package com.example.smartrade.webservices;
 import static java.util.stream.Collectors.joining;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,6 +19,7 @@ import java.util.stream.Stream;
 
 /**
  * Pings the Yahoo Finance API to get the price of a ticker.
+ * https://www.yahoofinanceapi.com
  */
 public class PingFinanceApiTask extends AsyncTask<String, Integer, JSONObject> {
 
@@ -107,8 +109,9 @@ public class PingFinanceApiTask extends AsyncTask<String, Integer, JSONObject> {
             JSONObject result = (JSONObject) results.get(0);
             double price = result.getDouble("ask");
             String ticker = result.getString("symbol");
+            String longName = result.getString("longName");
             // Notify the activity of the new values.
-            listener.notifyPriceUpdate(price, ticker);
+            listener.notifyPriceUpdate(price, ticker, longName);
         } catch (JSONException e) {
             listener.notifyMessage("Something went wrong when fetching the Stock price.");
             e.printStackTrace();

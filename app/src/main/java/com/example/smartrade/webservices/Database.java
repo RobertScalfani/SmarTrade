@@ -210,6 +210,7 @@ public class Database implements FinanceApiListener {
             return;
         }
 
+
         PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
     }
 
@@ -253,6 +254,7 @@ public class Database implements FinanceApiListener {
                 TradeHistory newTrade = new TradeHistory((new Date()).toString(), TradeHistory.TransactionType.SELL.toString(), sharesToSell, price);
                 this.addTradeHistory(user, ticker, newTrade);
             }
+            databaseListener.notifyMessage("Sell order confirmed");
         });
     }
 
@@ -466,7 +468,7 @@ public class Database implements FinanceApiListener {
     }
 
     @Override
-    public void notifyPriceUpdate(double price, String ticker) {
+    public void notifyPriceUpdate(double price, String ticker, String longName) {
         try {
             if (transactionType.equals(TradeHistory.TransactionType.BUY)) {
                 this.buyStockBasedOnPrice(ticker, this.sharesToBuyTracker, price);

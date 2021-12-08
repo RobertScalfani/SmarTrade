@@ -2,6 +2,7 @@ package com.example.smartrade.tabfragments;
 
 import android.os.Bundle;
 import android.text.Editable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -122,12 +123,14 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
      */
     public void buyStock(String ticker, double sharesToBuy) {
         Database.getDatabase().buyStock(ticker, sharesToBuy);
+        Toast.makeText(this.getContext(), "Buy order confirmed", Toast.LENGTH_SHORT).show();
     }
 
     /**
      * Sends a request to sell stock.
      */
     public void sellStock(String ticker, double sharesToSell) {
+        Toast.makeText(this.getContext(), "Selling shares...", Toast.LENGTH_SHORT).show();
         try {
             Database.getDatabase().sellStock(ticker, sharesToSell);
         } catch (Database.FirebaseAccessException e) {
@@ -146,7 +149,7 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     }
 
     @Override
-    public void notifyPriceUpdate(double price, String ticker) {
+    public void notifyPriceUpdate(double price, String ticker, String longName) {
         // Update ticker.
         TextView displayTicker = getView().findViewById(R.id.display_ticker);
         displayTicker.setText(ticker);
@@ -155,6 +158,9 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
         // Update price.
         TextView displayPrice = getView().findViewById(R.id.tickerPrice);
         displayPrice.setText("$" + price);
+
+        TextView longNameDisplay = getView().findViewById(R.id.companyName);
+        longNameDisplay.setText(longName);
     }
 
     @Override
