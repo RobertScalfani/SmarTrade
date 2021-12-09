@@ -21,7 +21,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.smartrade.R;
@@ -33,7 +35,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class LeaderboardFragment extends Fragment implements DatabaseListener, LocationListener {
 
@@ -44,6 +48,7 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
     LocationManager locationManager;
     String provider;
     Location userLocation;
+    ArrayList<String> users = new ArrayList<>();
 
     public LeaderboardFragment() {
         // Required empty public constructor
@@ -52,17 +57,32 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_leaderboard, container, false);
+        ListView leaderboard = (ListView) rootView.findViewById(R.id.leaderboardListView);
+        ArrayAdapter<String> listViewAdapter = new ArrayAdapter<String>(
+                getActivity(),
+                android.R.layout.simple_list_item_1,
+                users
+        );
         // Database init
         Database.initializeDatabase(this);
+
         getLeaderboardBtn = (Button) rootView.findViewById(R.id.leaderboardBtn);
         getLeaderboardBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
+                    users.clear();
                     Database.getDatabase().addUserCoordinates(longitude, latitude);
                     Database.getDatabase().generateLeaderboardRankings();
+                    for(Map.Entry<String, Double> entry : Database.sortedPortfolioBalances.entrySet()){
+                        Log.w("LEADERFRAG", entry.getKey());
+                        users.add("User: " + entry.getKey() + " Total Value: $" + entry.getValue());
+                    }
+                    listViewAdapter.notifyDataSetChanged();
+                    leaderboard.invalidateViews();
                 } catch (Database.FirebaseAccessException e) {
                     e.printStackTrace();
                 }
@@ -72,6 +92,7 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
         LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,0, (android.location.LocationListener) this);
 
+        leaderboard.setAdapter(listViewAdapter);
         return rootView;
     }
 

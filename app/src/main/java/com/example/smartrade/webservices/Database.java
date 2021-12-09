@@ -40,6 +40,9 @@ public class Database implements FinanceApiListener {
     // Map<UID -> Portfolio Balance>
     Map<String, Double> usersPortfoliobalances = new HashMap<>();
 
+    // Sorted Map<UID -> Balance>
+    public static Map<String, Double> sortedPortfolioBalances = new HashMap<>();
+
     private static final String STOCK_TICKERS = "STOCK_TICKERS";
     private static final String SHARES_OWNED = "SHARES_OWNED";
     private static final String CASH_BALANCE = "CASH_BALANCE";
@@ -73,6 +76,8 @@ public class Database implements FinanceApiListener {
             Database.database = new Database();
         }
     }
+
+
 
     /**
      * Returns the database singleton.
@@ -567,7 +572,7 @@ public class Database implements FinanceApiListener {
         }
 
 
-        HashMap<String, Double> sortedBalances = usersPortfoliobalances.entrySet().stream()
+        sortedPortfolioBalances = usersPortfoliobalances.entrySet().stream()
                 .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -577,10 +582,10 @@ public class Database implements FinanceApiListener {
 
         //Remove uids that are too far from our current user
         for(String uid : badUids){
-            sortedBalances.remove(uid);
+            sortedPortfolioBalances.remove(uid);
         }
 
-        Log.i("SORTED BALANCES", sortedBalances.toString());
+        Log.i("SORTED BALANCES", sortedPortfolioBalances.toString());
 
 //        databaseListener.notifyLeaderBoardUpdate(sortedBalances);
 
