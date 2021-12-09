@@ -206,7 +206,7 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     @Override
     public void notifyCashBalanceUpdate(double newCashBalance) {
         TextView cashBalanceMainActivity = getView().findViewById(R.id.CashBalanceMain);
-        cashBalanceMainActivity.setText("Cash Balance: " + String.format("%.2f",newCashBalance));
+        cashBalanceMainActivity.setText("Cash Balance: $" + String.format("%.2f",newCashBalance));
     }
 
     @Override

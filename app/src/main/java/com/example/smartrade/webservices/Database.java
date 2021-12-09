@@ -38,7 +38,7 @@ public class Database implements FinanceApiListener {
     Map<String, Map<String, Double>> userStockQuantities = new HashMap<>();
 
     // Map<UID -> Portfolio Balance>
-    Map<String, Double> usersPortfoliobalances = new HashMap<>();
+    public static Map<String, Double> usersPortfoliobalances = new HashMap<>();
 
     // Sorted Map<UID -> Balance>
     public static Map<String, Double> sortedPortfolioBalances = new HashMap<>();

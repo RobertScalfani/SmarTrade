@@ -35,14 +35,11 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
     private List<StockItemCard> stockItemList = new ArrayList<>();
 
     TextView portfolioValue;
-    TextView positionValue;
     TextView cashBalance;
     TextView gainLossDollar;
     TextView gainLossPercentage;
 
-    public DashboardFragment() {
-        // Required empty public constructor
-    }
+    public DashboardFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,7 +55,11 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
         Database.initializeDatabase(this);
         // Update the current Cash Balance.
         Database.getDatabase().addToCashBalance(0.0);
-
+        try {
+            portfolioValue.setText(String.format("$%.2f", Database.usersPortfoliobalances.get(Database.getDatabase().getCurrentUser().getUid())));
+        } catch (Database.FirebaseAccessException e) {
+            e.printStackTrace();
+        }
         this.updateRecyclerView();
     }
 
@@ -77,7 +78,6 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(this.getContext(), LoginActivity.class);
             startActivity(intent);
-//            finish();
             String signOutMsg = "You are now signed out.";
             Toast.makeText(this.getContext(), signOutMsg, Toast.LENGTH_SHORT).show();
         });
@@ -111,7 +111,7 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
 
     @Override
     public void notifyCashBalanceUpdate(double newCashBalance) {
-        this.cashBalance.setText(String.format("%.2f",newCashBalance));
+        this.cashBalance.setText(String.format("$%.2f",newCashBalance));
     }
 
     @Override
@@ -126,6 +126,5 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
 
     @Override
     public void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position) {
-
     }
 }
