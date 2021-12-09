@@ -20,6 +20,8 @@ import com.example.smartrade.webservices.FinanceApiListener;
 import com.example.smartrade.webservices.PingFinanceApiTask;
 import com.example.smartrade.webservices.TradeHistory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class TradeFragment extends Fragment implements FinanceApiListener, DatabaseListener {
@@ -145,7 +147,9 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
         String ticker = this.getCurrentTicker();
         Database.getDatabase().updateUserStockOwned(ticker);
         // Make ticker api request.
-        PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
+        List<String> tickerList = new ArrayList<>();
+        tickerList.add(ticker);
+        PingFinanceApiTask.callWebserviceButtonHandler(tickerList, this);
     }
 
     @Override
@@ -166,6 +170,11 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     @Override
     public void notifyMessage(String message) {
         Toast.makeText(this.getContext(), message ,Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void notifyDoneFetchingPrices() {
+
     }
 
     @Override

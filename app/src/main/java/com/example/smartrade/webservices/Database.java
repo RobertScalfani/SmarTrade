@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -24,6 +25,14 @@ import java.util.stream.Stream;
  */
 public class Database implements FinanceApiListener {
 
+    // Map<Ticker->CurrentKnownPrice>
+    private static final Map<String, Double> tickerPrices = new HashMap<>();
+
+    // Map<UID->Map<Ticker->Quantity>>
+    Map<String, Map<String, Double>> userStockQuantities = new HashMap<>();
+
+    // Map<UID -> Portfolio Balance>
+    Map<String, Double> usersPortfoliobalances = new HashMap<>();
 
     private static final String STOCK_TICKERS = "STOCK_TICKERS";
     private static final String SHARES_OWNED = "SHARES_OWNED";
@@ -147,7 +156,9 @@ public class Database implements FinanceApiListener {
         }
 
         // Make the request for the price.
-        PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
+        List<String> tickerList = new ArrayList<String>();
+        tickerList.add(ticker);
+        PingFinanceApiTask.callWebserviceButtonHandler(tickerList, this);
     }
 
     /**
@@ -210,8 +221,9 @@ public class Database implements FinanceApiListener {
             return;
         }
 
-
-        PingFinanceApiTask.callWebserviceButtonHandler(ticker, this);
+        List<String> tickerList = new ArrayList<String>();
+        tickerList.add(ticker);
+        PingFinanceApiTask.callWebserviceButtonHandler(tickerList, this);
     }
 
     /**
@@ -364,13 +376,20 @@ public class Database implements FinanceApiListener {
      * @throws FirebaseAccessException
      */
     public void generateLeaderboardRankings() throws FirebaseAccessException {
+        this.transactionType = TradeHistory.TransactionType.LEADERBOARD;
         //Grabs data from each document
         DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
         rootReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Iterable<DataSnapshot> children = snapshot.getChildren();
+                // UID->Map<Key->Value>
                 HashMap<String, HashMap<String, String>> prepForLeaderboard = new HashMap<String, HashMap<String, String>>();
+
+
+
+                List<String> tickerList = new ArrayList<>();
+
                 //Iterates over all of our documents
                 for(DataSnapshot child : children){
                     HashMap<String, String> userValues = new HashMap<String, String>();
@@ -387,23 +406,30 @@ public class Database implements FinanceApiListener {
                         userValues.put("LONGITUDE", coordinates.get("LONGITUDE").toString());
 
                     }
+
+                    ///
+
                     //Add Total Stock Value to userValues
                     if(userObj.get(STOCK_TICKERS) != null){
                         HashMap<String, Object> stocks = (HashMap<String, Object>) userObj.get(STOCK_TICKERS);
+
+                        // Map<UID->Map<Ticker->Quantity>>
+                        Map<String, Double> currentStockQuantities = new HashMap<>();
+
                         for(Map.Entry<String, Object> stock : stocks.entrySet()){
                             String ticker;
                             ticker = stock.getKey();
+                            Log.i("DATABASE:", "TICKER BEING ADDED: " + ticker);
                             HashMap<String, Object> stockInfo = (HashMap<String, Object>) stock.getValue();
-                            Integer quantity = Integer.parseInt(stockInfo.get("SHARES_OWNED").toString());
+                            double quantity = Double.parseDouble(stockInfo.get("SHARES_OWNED").toString());
 
-                            //Get Price Here (For Ticker, Quantity * Price)
-                            //In db, we ping finance API
-                                //in db, declare notifyPriceForTicker()
-                            //within API, things happen
-                            //API pings Database.notifyPriceUpdate()
-                            //Database now has the price
+                            tickerList.add(ticker);
+
+                            currentStockQuantities.put(ticker, quantity);
 
                         }
+                        // This is where ONLY valid in-range users should be passed.
+                        userStockQuantities.put(userId, currentStockQuantities);
                     }
                     Log.i("HASHMAP", userValues.keySet().toString());
                     //Add userValues to our leaderboard ready hashmap
@@ -411,30 +437,21 @@ public class Database implements FinanceApiListener {
                 }
 
                 //Creates an list of users ranked by total portfolio value
-                    //TODO: Make this total portfolio value and not cash balance
-                HashMap<String, Double> usersPortfolioValue = new HashMap<String, Double>();
                 for(Map.Entry<String, HashMap<String, String>> user : prepForLeaderboard.entrySet()){
                     String uid = user.getKey();
                     String cashBalStr = user.getValue().get("CASH_BALANCE");
-                    usersPortfolioValue.put(uid, Double.parseDouble(cashBalStr));
-
-                    }
-                Stream<Map.Entry<String,Double>> sorted =
-                        usersPortfolioValue.entrySet().stream()
-                                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+                    usersPortfoliobalances.put(uid, Double.parseDouble(cashBalStr));
                 }
 
+                PingFinanceApiTask.callWebserviceButtonHandler(tickerList, Database.getDatabase());
 
-
+                }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
 
             }
         });
-
-
-
 
     }
 
@@ -469,11 +486,17 @@ public class Database implements FinanceApiListener {
 
     @Override
     public void notifyPriceUpdate(double price, String ticker, String longName) {
+
+        Log.i("DATABASE:", "ADDING TO TICKER PRICES: " + ticker + " " + price);
+        tickerPrices.put(ticker, price);
+
         try {
             if (transactionType.equals(TradeHistory.TransactionType.BUY)) {
                 this.buyStockBasedOnPrice(ticker, this.sharesToBuyTracker, price);
-            } else {
+            } else if (transactionType.equals(TradeHistory.TransactionType.SELL)) {
                 this.sellStockBasedOnPrice(ticker, this.sharesToSellTracker, price);
+            } else if (transactionType.equals(TradeHistory.TransactionType.LEADERBOARD)) {
+
             }
         } catch(FirebaseAccessException e){
             Database.databaseListener.notifyMessage("There was an issue getting your user information for the trade request.");
@@ -483,6 +506,45 @@ public class Database implements FinanceApiListener {
     @Override
     public void notifyMessage(String s) {
         Database.databaseListener.notifyMessage(s);
+    }
+
+    @Override
+    public void notifyDoneFetchingPrices() {
+
+        // We have every ticker price in this.tickerPrices.
+        // We also have every ticker count for every user in this.userStockQuantities
+
+        for(String currentUser : this.userStockQuantities.keySet()) {
+            double userPortfolioBalance = usersPortfoliobalances.get(currentUser);
+            Map<String, Double> stockQuantities = this.userStockQuantities.get(currentUser);
+            Log.i("LEADERBOARD SQ: ", stockQuantities.toString());
+            Log.i("LEADERBOARD UP: ", "" + userPortfolioBalance);
+            Log.i("LEADERBOARD TP: ", "" + tickerPrices);
+            if(stockQuantities != null && stockQuantities.size() > 0) {
+                for(String ticker : stockQuantities.keySet()) {
+                    if(Database.tickerPrices.containsKey(ticker)){
+                        Log.i("LEADERBOARD: BEING CHECKED FOR USER ", ticker + " " + currentUser);
+                        double tickerPrice = Database.tickerPrices.get(ticker);
+                        double quantity = stockQuantities.get(ticker);
+                        double shareValues = quantity * tickerPrice;
+                        userPortfolioBalance += shareValues;
+                    }
+                }
+                usersPortfoliobalances.put(currentUser, userPortfolioBalance);
+                Log.i("LEADERBOARD UP: ", "" + usersPortfoliobalances);
+            }
+
+
+        }
+
+        Stream<Map.Entry<String,Double>> sortedBalances =
+                usersPortfoliobalances.entrySet().stream()
+                        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+
+        Log.e("FIREBASE", sortedBalances.toString());
+
+//        databaseListener.notifyLeaderBoardUpdate(sortedBalances);
+
     }
 
     /**

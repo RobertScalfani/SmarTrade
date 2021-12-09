@@ -33,7 +33,8 @@ public class TradeHistory implements Serializable {
 
     public enum TransactionType {
         BUY,
-        SELL
+        SELL,
+        LEADERBOARD;
     }
 
 }

@@ -19,5 +19,5 @@ public interface FinanceApiListener {
      */
     void notifyMessage(String s);
 
-
+    void notifyDoneFetchingPrices();
 }
