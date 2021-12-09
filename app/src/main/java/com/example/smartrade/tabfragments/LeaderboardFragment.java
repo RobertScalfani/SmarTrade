@@ -79,7 +79,7 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
                     Database.getDatabase().generateLeaderboardRankings();
                     for(Map.Entry<String, Double> entry : Database.sortedPortfolioBalances.entrySet()){
                         Log.w("LEADERFRAG", entry.getKey());
-                        users.add("User: " + entry.getKey() + " Total Value: $" + entry.getValue());
+                        users.add("User: " + entry.getKey().substring(0, 4) + " Total Portfolio Value: $" + entry.getValue());
                     }
                     listViewAdapter.notifyDataSetChanged();
                     leaderboard.invalidateViews();
