@@ -68,7 +68,6 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
         View rootView = inflater.inflate(R.layout.fragment_dashboard, container, false);
 
         this.portfolioValue = rootView.findViewById(R.id.textViewPortfolioValue);
-        this.positionValue = rootView.findViewById(R.id.textviewPositionValue);
         this.cashBalance = rootView.findViewById(R.id.cashBalance);
         this.gainLossDollar = rootView.findViewById(R.id.textViewGainlossD);
         this.gainLossPercentage = rootView.findViewById(R.id.textViewGainlossP);

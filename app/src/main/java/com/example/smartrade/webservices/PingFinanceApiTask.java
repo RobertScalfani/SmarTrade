@@ -27,13 +27,19 @@ public class PingFinanceApiTask extends AsyncTask<List<String>, Integer, JSONObj
 
     private final static String API_KEY = "ZIWwEJPxnx3gCZVF9f6QKa6cH8MV7J4o4S5aQeSp";
     private final FinanceApiListener listener;
+    private final double numberOfShares;
 
     /**
      * Calls the web service with the given parameter.
      * @param param
      */
+    public static void callWebserviceButtonHandler(List<String> param, double numberOfShares, FinanceApiListener listener) {
+        PingFinanceApiTask task = new PingFinanceApiTask(listener, numberOfShares);
+        task.execute(param);
+    }
+
     public static void callWebserviceButtonHandler(List<String> param, FinanceApiListener listener) {
-        PingFinanceApiTask task = new PingFinanceApiTask(listener);
+        PingFinanceApiTask task = new PingFinanceApiTask(listener, 0.0);
         task.execute(param);
     }
 
@@ -41,8 +47,9 @@ public class PingFinanceApiTask extends AsyncTask<List<String>, Integer, JSONObj
      * Private constructor.
      * @param listener
      */
-    private PingFinanceApiTask(FinanceApiListener listener) {
+    private PingFinanceApiTask(FinanceApiListener listener, double numberOfShares) {
         super();
+        this.numberOfShares = numberOfShares;
         this.listener = listener;
     }
 
@@ -127,7 +134,7 @@ public class PingFinanceApiTask extends AsyncTask<List<String>, Integer, JSONObj
                     String longName = result.getString("longName");
                     Log.i("API:", "Getting price for: " + ticker);
                     // Notify the activity of the new values.
-                    listener.notifyPriceUpdate(price, ticker, longName);
+                    listener.notifyPriceUpdate(price, ticker, numberOfShares, longName);
                 } else {
                     Log.i("API:", "Unable to get price for: " + result.getString("symbol"));
                 }

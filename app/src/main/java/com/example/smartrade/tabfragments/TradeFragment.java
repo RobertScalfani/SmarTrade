@@ -2,7 +2,7 @@ package com.example.smartrade.tabfragments;
 
 import android.os.Bundle;
 import android.text.Editable;
-import android.util.Log;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,10 +30,20 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_trade,container, false);
 
-        Button stockInfoButton = rootView.findViewById(R.id.get_price_btn);
-        stockInfoButton.setOnClickListener(
-                v -> {this.updateTickerInfo();}
-        );
+        // Buy/Sell input.
+        EditText tickerEditText = rootView.findViewById(R.id.enter_ticker);
+        tickerEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                updateTickerInfo();
+            }
+        });
 
         Button addMoneyBtn = rootView.findViewById(R.id.getMoney);
         addMoneyBtn.setOnClickListener(
@@ -46,7 +56,19 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
         // Buy/Sell input.
         EditText buySellEditText = rootView.findViewById(R.id.buySellEditText);
         buySellEditText.setHint("Shares to Buy/Sell");
+        buySellEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                setTotalCost(buySellEditText.getText().toString(), getCurrentTicker());
+            }
+        });
+                
         // Buy Button
         Button buyButton = rootView.findViewById(R.id.buyBtn);
         buyButton.setOnClickListener(
@@ -59,19 +81,19 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
                 v -> {this.sellStock(this.getCurrentTicker(), this.getSharesToBuySell());}
         );
 
-        // Logout Button
-//        Button logoutBtn = rootView.findViewById(R.id.logoutBtn);
-//        logoutBtn.setOnClickListener(v -> {
-//            FirebaseAuth.getInstance().signOut();
-//            // May be wrong...
-//            Intent intent = new Intent(this.getContext(), LoginActivity.class);
-//            startActivity(intent);
-////            finish();
-//            String signOutMsg = "You are now signed out.";
-//            Toast.makeText(this.getContext(), signOutMsg, Toast.LENGTH_SHORT).show();
-//        });
-
         return rootView;
+    }
+
+    private void setTotalCost(String shareCount, String currentTicker) {
+        List<String> tickerList = new ArrayList<>();
+        tickerList.add(currentTicker);
+        double numberOfShares = 0.0;
+        try{
+            numberOfShares = Double.parseDouble(shareCount);
+        } catch (NumberFormatException e) {
+            PingFinanceApiTask.callWebserviceButtonHandler(tickerList, this);
+        }
+        PingFinanceApiTask.callWebserviceButtonHandler(tickerList, numberOfShares, this);
     }
 
     @Override
@@ -149,11 +171,11 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
         // Make ticker api request.
         List<String> tickerList = new ArrayList<>();
         tickerList.add(ticker);
-        PingFinanceApiTask.callWebserviceButtonHandler(tickerList, this);
+        PingFinanceApiTask.callWebserviceButtonHandler(tickerList, 0.0, this);
     }
 
     @Override
-    public void notifyPriceUpdate(double price, String ticker, String longName) {
+    public void notifyPriceUpdate(double price, String ticker, double numberOfShares, String longName) {
         // Update ticker.
         TextView displayTicker = getView().findViewById(R.id.display_ticker);
         displayTicker.setText(ticker);
@@ -165,6 +187,10 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
 
         TextView longNameDisplay = getView().findViewById(R.id.companyName);
         longNameDisplay.setText(longName);
+
+
+        TextView totalCostText = this.getView().findViewById(R.id.totalCost);
+        totalCostText.setText("Total Cost: $" + numberOfShares * price);
     }
 
     @Override

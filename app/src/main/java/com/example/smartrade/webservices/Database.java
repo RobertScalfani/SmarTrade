@@ -515,7 +515,7 @@ public class Database implements FinanceApiListener {
     }
 
     @Override
-    public void notifyPriceUpdate(double price, String ticker, String longName) {
+    public void notifyPriceUpdate(double price, String ticker, double numberOfShares, String longName) {
 
         Log.i("DATABASE:", "ADDING TO TICKER PRICES: " + ticker + " " + price);
         tickerPrices.put(ticker, price);

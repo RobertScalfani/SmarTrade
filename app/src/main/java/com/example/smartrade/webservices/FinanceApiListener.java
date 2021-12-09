@@ -11,7 +11,7 @@ public interface FinanceApiListener {
      * @param ticker    The ticker the price is for.
      * @param longName
      */
-    void notifyPriceUpdate(double price, String ticker, String longName);
+    void notifyPriceUpdate(double price, String ticker, double numberOfShares, String longName);
 
     /**
      * Notifies the listener of a message to display to the user.
