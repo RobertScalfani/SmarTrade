@@ -21,6 +21,7 @@ import com.example.smartrade.webservices.DatabaseListener;
 import com.example.smartrade.webservices.FinanceApiListener;
 import com.example.smartrade.webservices.PingFinanceApiTask;
 import com.example.smartrade.webservices.TradeHistory;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,8 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
 
         if(LoginActivity.newUser) {
             this.addToCashBalance(50000);
-            this.notifyMessage("Here's $50,000 to start you off! Good Luck!");
+            Snackbar.make(this.getView(), "Here's $50,000 to start you off! Good Luck!", Snackbar.LENGTH_SHORT).show();
+//            this.notifyMessage("Here's $50,000 to start you off! Good Luck!");
         }
 
         // Force-initialize the database.
