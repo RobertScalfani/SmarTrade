@@ -16,8 +16,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -27,6 +32,7 @@ public class Database implements FinanceApiListener {
 
     // Map<Ticker->CurrentKnownPrice>
     private static final Map<String, Double> tickerPrices = new HashMap<>();
+    HashSet<String> badUids = new HashSet<>();
 
     // Map<UID->Map<Ticker->Quantity>>
     Map<String, Map<String, Double>> userStockQuantities = new HashMap<>();
@@ -52,6 +58,8 @@ public class Database implements FinanceApiListener {
     private double sharesToSellTracker = 0.0;
     private double sharesToBuyTracker = 0.0;
     private double cashBalanceTracker = 0.0;
+    private double userLong;
+    private double userLat;
     // Tracks the current buy or sell status of the user.
     TradeHistory.TransactionType transactionType;
 
@@ -342,44 +350,40 @@ public class Database implements FinanceApiListener {
         DatabaseReference coordinateReference = Database.getUserReference(user).child(COORDINATES);
         coordinateReference.child("LONGITUDE").setValue(longitude);
         coordinateReference.child("LATITUDE").setValue(latitude);
+        userLong = longitude;
+        userLat = latitude;
     }
 
-    /**
-     * Calculates the distance between two users in miles
-     * @param lat1
-     * @param lon1
-     * @param lat2
-     * @param lon2
-     * @return
-     */
-    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        double theta = lon1 - lon2;
-        double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
-        dist = Math.acos(dist);
-        dist = rad2deg(dist);
-        dist = dist * 60 * 1.1515;
 
-        return (dist);
-    }
-
-    //Supporting function for calculateDistance
-    private double deg2rad(double deg) {
-        return (deg * Math.PI / 180.0);
-    }
-    //Supporting function for calculateDistance
-    private double rad2deg(double rad) {
-        return (rad * 180.0 / Math.PI);
-    }
 
     /**
      * Generates the leaderboard information
      * @throws FirebaseAccessException
      */
     public void generateLeaderboardRankings() throws FirebaseAccessException {
+        FirebaseUser currentUser = this.getCurrentUser();
         this.transactionType = TradeHistory.TransactionType.LEADERBOARD;
         //Grabs data from each document
         DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference coordinateReference = Database.getUserReference(currentUser).child(COORDINATES);
         rootReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+                double theta = lon1 - lon2;
+                double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+                dist = Math.acos(dist);
+                dist = rad2deg(dist);
+
+                return (dist);
+            }
+
+            //Supporting function for calculateDistance
+            private double deg2rad(double deg) {
+                return (deg * Math.PI / 180.0);
+            }
+            //Supporting function for calculateDistance
+            private double rad2deg(double rad) {
+                return (rad * 180.0 / Math.PI);
+            }
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Iterable<DataSnapshot> children = snapshot.getChildren();
@@ -395,10 +399,13 @@ public class Database implements FinanceApiListener {
                     HashMap<String, String> userValues = new HashMap<String, String>();
                     //Get User Id
                     String userId = child.getKey();
+
                     //Create Hashmap of user children so we can access firebase data
                     HashMap<String, Object> userObj = (HashMap<String, Object>) child.getValue();
                     //Add Cash Balance to userValues
                     userValues.put("CASH_BALANCE", userObj.get(CASH_BALANCE).toString());
+
+
                     //Add Coordinates to userValues
                     if(userObj.get(COORDINATES) != null){
                         HashMap<String, Object> coordinates = (HashMap<String, Object>) userObj.get(COORDINATES);
@@ -407,7 +414,7 @@ public class Database implements FinanceApiListener {
 
                     }
 
-                    ///
+
 
                     //Add Total Stock Value to userValues
                     if(userObj.get(STOCK_TICKERS) != null){
@@ -419,7 +426,6 @@ public class Database implements FinanceApiListener {
                         for(Map.Entry<String, Object> stock : stocks.entrySet()){
                             String ticker;
                             ticker = stock.getKey();
-                            Log.i("DATABASE:", "TICKER BEING ADDED: " + ticker);
                             HashMap<String, Object> stockInfo = (HashMap<String, Object>) stock.getValue();
                             double quantity = Double.parseDouble(stockInfo.get("SHARES_OWNED").toString());
 
@@ -428,13 +434,31 @@ public class Database implements FinanceApiListener {
                             currentStockQuantities.put(ticker, quantity);
 
                         }
+
+
                         // This is where ONLY valid in-range users should be passed.
-                        userStockQuantities.put(userId, currentStockQuantities);
+                        String currentUserId = currentUser.getUid();
+                        String comparedUserId = userId;
+
+                        if(userValues.get("LATITUDE") != null && userValues.get("LONGITUDE") != null){
+
+                            Double comparedLong = Double.parseDouble(userValues.get("LATITUDE"));
+                            Double comparedLat = Double.parseDouble(userValues.get("LONGITUDE"));
+                            Double distance = calculateDistance(userLat, userLong, comparedLat, comparedLong);
+
+                            Log.w("DISTANCE PRE ADDING", userId + " " + distance);
+                            if(distance < 100){
+                                badUids.add(comparedUserId);
+                                Log.w("BAD UIDS", comparedUserId);
+                            }
+                            userStockQuantities.put(userId, currentStockQuantities);
+                            prepForLeaderboard.put(userId, userValues);
+                        }
                     }
-                    Log.i("HASHMAP", userValues.keySet().toString());
                     //Add userValues to our leaderboard ready hashmap
-                    prepForLeaderboard.put(userId, userValues);
+                   // prepForLeaderboard.put(userId, userValues);
                 }
+
 
                 //Creates an list of users ranked by total portfolio value
                 for(Map.Entry<String, HashMap<String, String>> user : prepForLeaderboard.entrySet()){
@@ -442,6 +466,7 @@ public class Database implements FinanceApiListener {
                     String cashBalStr = user.getValue().get("CASH_BALANCE");
                     usersPortfoliobalances.put(uid, Double.parseDouble(cashBalStr));
                 }
+
 
                 PingFinanceApiTask.callWebserviceButtonHandler(tickerList, Database.getDatabase());
 
@@ -530,18 +555,32 @@ public class Database implements FinanceApiListener {
                         userPortfolioBalance += shareValues;
                     }
                 }
-                usersPortfoliobalances.put(currentUser, userPortfolioBalance);
-                Log.i("LEADERBOARD UP: ", "" + usersPortfoliobalances);
+                if(!badUids.contains(currentUser)){
+                    usersPortfoliobalances.put(currentUser, userPortfolioBalance);
+                    Log.i("LEADERBOARD UP: ", "" + usersPortfoliobalances);
+                }
+
             }
+
 
 
         }
 
-        Stream<Map.Entry<String,Double>> sortedBalances =
-                usersPortfoliobalances.entrySet().stream()
-                        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
 
-        Log.e("FIREBASE", sortedBalances.toString());
+        HashMap<String, Double> sortedBalances = usersPortfoliobalances.entrySet().stream()
+                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (oldValue, newValue) -> oldValue, LinkedHashMap::new
+                ));
+
+        //Remove uids that are too far from our current user
+        for(String uid : badUids){
+            sortedBalances.remove(uid);
+        }
+
+        Log.i("SORTED BALANCES", sortedBalances.toString());
 
 //        databaseListener.notifyLeaderBoardUpdate(sortedBalances);
 
