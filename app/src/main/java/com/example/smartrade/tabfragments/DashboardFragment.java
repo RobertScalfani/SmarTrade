@@ -36,8 +36,6 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
 
     TextView portfolioValue;
     TextView cashBalance;
-    TextView gainLossDollar;
-    TextView gainLossPercentage;
 
     public DashboardFragment() {}
 
@@ -69,8 +67,6 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
 
         this.portfolioValue = rootView.findViewById(R.id.textViewPortfolioValue);
         this.cashBalance = rootView.findViewById(R.id.cashBalance);
-        this.gainLossDollar = rootView.findViewById(R.id.textViewGainlossD);
-        this.gainLossPercentage = rootView.findViewById(R.id.textViewGainlossP);
 
         Button dashLogoutBtn = rootView.findViewById(R.id.dash_logout_btn);
         dashLogoutBtn.setOnClickListener(v -> {
