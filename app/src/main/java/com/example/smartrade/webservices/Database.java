@@ -628,6 +628,7 @@ public class Database implements FinanceApiListener {
                         FirebaseUser user = mAuth.getCurrentUser();
                         loginSuccess[0] = true;
                         loginListener.notifyMessage("Logged in as " + user.getEmail() + loginSuccess[0]);
+                        loginListener.notifyLogin(false);
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.i("FIREBASE", "LOGIN FAILED");
@@ -652,7 +653,7 @@ public class Database implements FinanceApiListener {
                         Log.d("REGISTER", "createUserWithEmail:success");
                         FirebaseUser user = mAuth.getCurrentUser();
                         loginListener.notifyMessage("Registered in as " + user.getEmail());
-
+                        loginListener.notifyLogin(true);
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w("REGISTER", "createUserWithEmail:failure", task.getException());

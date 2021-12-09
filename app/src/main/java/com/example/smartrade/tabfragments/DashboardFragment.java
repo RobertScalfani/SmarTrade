@@ -122,4 +122,9 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
     @Override
     public void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position) {
     }
+
+    @Override
+    public void notifyLogin(boolean r) {
+
+    }
 }

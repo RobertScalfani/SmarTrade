@@ -74,4 +74,9 @@ public class TradeHistoryActivity extends AppCompatActivity implements DatabaseL
         this.tradeHistorylist.add(new TradeHistoryItemCard(ticker, tradeHistory));
         recyclerViewAdapter.notifyItemInserted(position);
     }
+
+    @Override
+    public void notifyLogin(boolean r) {
+
+    }
 }

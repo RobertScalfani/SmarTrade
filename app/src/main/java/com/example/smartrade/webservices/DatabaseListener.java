@@ -37,4 +37,6 @@ public interface DatabaseListener {
      * @param position
      */
     void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position);
+
+    void notifyLogin(boolean registered);
 }

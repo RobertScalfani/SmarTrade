@@ -126,6 +126,11 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
 
     }
 
+    @Override
+    public void notifyLogin(boolean r) {
+
+    }
+
 
     @Override
     public void onLocationChanged(@NonNull Location location) {

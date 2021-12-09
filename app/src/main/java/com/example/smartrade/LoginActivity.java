@@ -16,6 +16,7 @@ import com.example.smartrade.webservices.TradeHistory;
 public class LoginActivity extends AppCompatActivity implements DatabaseListener {
 
     private static final String PASSWORD = "password";
+    public static boolean newUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,11 +34,8 @@ public class LoginActivity extends AppCompatActivity implements DatabaseListener
                 String submittedEmail = emailText.getText().toString();
                 if(!validateLogin()) {
                     Database.getDatabase().promptLogin(submittedEmail, PASSWORD, this);
-                }
-                if(validateLogin()){
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    startActivity(intent);
-                    finish();
+                } else {
+                    notifyLogin(false);
                 }
             }
         );
@@ -96,5 +94,13 @@ public class LoginActivity extends AppCompatActivity implements DatabaseListener
     @Override
     public void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position) {
 
+    }
+
+    @Override
+    public void notifyLogin(boolean registered) {
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        LoginActivity.newUser = registered;
+        startActivity(intent);
+        finish();
     }
 }

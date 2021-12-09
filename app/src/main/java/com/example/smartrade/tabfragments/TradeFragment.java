@@ -3,6 +3,7 @@ package com.example.smartrade.tabfragments;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
+import com.example.smartrade.LoginActivity;
 import com.example.smartrade.R;
 import com.example.smartrade.webservices.Database;
 import com.example.smartrade.webservices.DatabaseListener;
@@ -45,10 +47,10 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
             }
         });
 
-        Button addMoneyBtn = rootView.findViewById(R.id.getMoney);
-        addMoneyBtn.setOnClickListener(
-                v -> {this.addToCashBalance(10000);}
-        );
+        if(LoginActivity.newUser) {
+            this.addToCashBalance(50000);
+            this.notifyMessage("Here's $50,000 to start you off! Good Luck!");
+        }
 
         // Force-initialize the database.
         Database.initializeDatabase(this);
@@ -222,6 +224,11 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
 
     @Override
     public void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position) {
+
+    }
+
+    @Override
+    public void notifyLogin(boolean r) {
 
     }
 
