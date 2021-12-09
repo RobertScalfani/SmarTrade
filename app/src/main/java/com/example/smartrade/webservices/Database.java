@@ -65,6 +65,7 @@ public class Database implements FinanceApiListener {
     private double userLat;
     // Tracks the current buy or sell status of the user.
     TradeHistory.TransactionType transactionType;
+    public Double currentUserPortfolioBalance;
 
     /**
      * Initializes the database with the give database listener.
@@ -548,7 +549,7 @@ public class Database implements FinanceApiListener {
             double userPortfolioBalance = usersPortfoliobalances.get(currentUser);
             Map<String, Double> stockQuantities = this.userStockQuantities.get(currentUser);
             Log.i("LEADERBOARD SQ: ", stockQuantities.toString());
-            Log.i("LEADERBOARD UP: ", "" + userPortfolioBalance);
+            Log.i("LEADERBOARD Initial User Portfolio: ", "" + userPortfolioBalance);
             Log.i("LEADERBOARD TP: ", "" + tickerPrices);
             if(stockQuantities != null && stockQuantities.size() > 0) {
                 for(String ticker : stockQuantities.keySet()) {
@@ -560,10 +561,10 @@ public class Database implements FinanceApiListener {
                         userPortfolioBalance += shareValues;
                     }
                 }
-                if(!badUids.contains(currentUser)){
+//                if(!badUids.contains(currentUser)){
                     usersPortfoliobalances.put(currentUser, userPortfolioBalance);
                     Log.i("LEADERBOARD UP: ", "" + usersPortfoliobalances);
-                }
+//                }
 
             }
 
@@ -579,6 +580,12 @@ public class Database implements FinanceApiListener {
                         Map.Entry::getValue,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new
                 ));
+
+        try {
+            currentUserPortfolioBalance = usersPortfoliobalances.get(Database.getDatabase().getCurrentUser().getUid());
+        } catch (FirebaseAccessException e) {
+            e.printStackTrace();
+        }
 
         //Remove uids that are too far from our current user
         for(String uid : badUids){

@@ -55,10 +55,9 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
         Database.initializeDatabase(this);
         // Update the current Cash Balance.
         Database.getDatabase().addToCashBalance(0.0);
-        try {
-            portfolioValue.setText(String.format("$%.2f", Database.usersPortfoliobalances.get(Database.getDatabase().getCurrentUser().getUid())));
-        } catch (Database.FirebaseAccessException e) {
-            e.printStackTrace();
+        String portfolioBalance = String.format("$%.2f", Database.getDatabase().currentUserPortfolioBalance);
+        if(!portfolioBalance.equals("$nu")) {
+            portfolioValue.setText(portfolioBalance);
         }
         this.updateRecyclerView();
     }
