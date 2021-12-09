@@ -24,6 +24,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.smartrade.R;
@@ -61,6 +62,7 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_leaderboard, container, false);
         ListView leaderboard = (ListView) rootView.findViewById(R.id.leaderboardListView);
+        TextView uid = rootView.findViewById(R.id.userIdTextView);
         ArrayAdapter<String> listViewAdapter = new ArrayAdapter<String>(
                 getActivity(),
                 android.R.layout.simple_list_item_1,
@@ -74,12 +76,13 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
             @Override
             public void onClick(View view) {
                 try {
+                    uid.setText("Your ID: " + Database.getDatabase().getCurrentUser().getUid().substring(0,4));
                     users.clear();
                     Database.getDatabase().addUserCoordinates(longitude, latitude);
                     Database.getDatabase().generateLeaderboardRankings();
                     for(Map.Entry<String, Double> entry : Database.sortedPortfolioBalances.entrySet()){
                         Log.w("LEADERFRAG", entry.getKey());
-                        users.add("User: " + entry.getKey().substring(0, 4) + " Total Portfolio Value: $" + entry.getValue());
+                        users.add("User: " + entry.getKey().substring(0, 4) + ", Total Portfolio Value: $" + entry.getValue());
                     }
                     listViewAdapter.notifyDataSetChanged();
                     leaderboard.invalidateViews();
