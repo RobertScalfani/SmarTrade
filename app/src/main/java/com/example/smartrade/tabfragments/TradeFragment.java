@@ -235,6 +235,11 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
     }
 
     @Override
+    public void notifyPortfolioBalanceUpdated() {
+
+    }
+
+    @Override
     public String toString() {
         return "Trade";
     }

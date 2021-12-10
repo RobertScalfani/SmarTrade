@@ -103,4 +103,9 @@ public class LoginActivity extends AppCompatActivity implements DatabaseListener
         startActivity(intent);
         finish();
     }
+
+    @Override
+    public void notifyPortfolioBalanceUpdated() {
+
+    }
 }

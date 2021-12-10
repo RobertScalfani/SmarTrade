@@ -441,7 +441,6 @@ public class Database implements FinanceApiListener {
 
                         }
 
-
                         // This is where ONLY valid in-range users should be passed.
                         String currentUserId = currentUser.getUid();
                         String comparedUserId = userId;
@@ -464,7 +463,6 @@ public class Database implements FinanceApiListener {
                     //Add userValues to our leaderboard ready hashmap
                    // prepForLeaderboard.put(userId, userValues);
                 }
-
 
                 //Creates an list of users ranked by total portfolio value
                 for(Map.Entry<String, HashMap<String, String>> user : prepForLeaderboard.entrySet()){
@@ -561,10 +559,10 @@ public class Database implements FinanceApiListener {
                         userPortfolioBalance += shareValues;
                     }
                 }
-//                if(!badUids.contains(currentUser)){
+                if(!badUids.contains(currentUser)){
                     usersPortfoliobalances.put(currentUser, userPortfolioBalance);
                     Log.i("LEADERBOARD UP: ", "" + usersPortfoliobalances);
-//                }
+                }
 
             }
 
@@ -594,7 +592,7 @@ public class Database implements FinanceApiListener {
 
         Log.i("SORTED BALANCES", sortedPortfolioBalances.toString());
 
-//        databaseListener.notifyLeaderBoardUpdate(sortedBalances);
+        databaseListener.notifyPortfolioBalanceUpdated();
 
     }
 

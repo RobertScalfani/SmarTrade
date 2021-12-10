@@ -45,6 +45,12 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
         // Update the current Cash Balance.
         Database.initializeDatabase(this);
         Database.getDatabase().addToCashBalance(0.0);
+
+        try {
+            Database.getDatabase().generateLeaderboardRankings();
+        } catch (Database.FirebaseAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -58,6 +64,12 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
             portfolioValue.setText(portfolioBalance);
         }
         this.updateRecyclerView();
+
+        try {
+            Database.getDatabase().generateLeaderboardRankings();
+        } catch (Database.FirebaseAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -126,5 +138,10 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
     @Override
     public void notifyLogin(boolean r) {
 
+    }
+
+    @Override
+    public void notifyPortfolioBalanceUpdated() {
+        this.portfolioValue.setText("$" + Database.getDatabase().currentUserPortfolioBalance);
     }
 }

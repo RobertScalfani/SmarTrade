@@ -79,4 +79,9 @@ public class TradeHistoryActivity extends AppCompatActivity implements DatabaseL
     public void notifyLogin(boolean r) {
 
     }
+
+    @Override
+    public void notifyPortfolioBalanceUpdated() {
+
+    }
 }

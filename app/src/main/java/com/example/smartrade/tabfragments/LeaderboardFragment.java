@@ -131,6 +131,11 @@ public class LeaderboardFragment extends Fragment implements DatabaseListener, L
 
     }
 
+    @Override
+    public void notifyPortfolioBalanceUpdated() {
+
+    }
+
 
     @Override
     public void onLocationChanged(@NonNull Location location) {

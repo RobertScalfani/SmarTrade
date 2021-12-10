@@ -39,4 +39,6 @@ public interface DatabaseListener {
     void notifyTradeHistory(String ticker, TradeHistory tradeHistory, int position);
 
     void notifyLogin(boolean registered);
+
+    void notifyPortfolioBalanceUpdated();
 }
