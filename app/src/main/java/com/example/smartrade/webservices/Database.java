@@ -417,7 +417,6 @@ public class Database implements FinanceApiListener {
                         HashMap<String, Object> coordinates = (HashMap<String, Object>) userObj.get(COORDINATES);
                         userValues.put("LATITUDE", coordinates.get("LATITUDE").toString());
                         userValues.put("LONGITUDE", coordinates.get("LONGITUDE").toString());
-
                     }
 
 

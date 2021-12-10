@@ -45,12 +45,6 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
         // Update the current Cash Balance.
         Database.initializeDatabase(this);
         Database.getDatabase().addToCashBalance(0.0);
-
-        try {
-            Database.getDatabase().generateLeaderboardRankings();
-        } catch (Database.FirebaseAccessException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
