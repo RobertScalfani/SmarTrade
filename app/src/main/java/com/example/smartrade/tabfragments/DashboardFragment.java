@@ -142,6 +142,7 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
 
     @Override
     public void notifyPortfolioBalanceUpdated() {
-        this.portfolioValue.setText("$" + Database.getDatabase().currentUserPortfolioBalance);
+        String format = String.format("$%.2f", Database.getDatabase().currentUserPortfolioBalance);
+        this.portfolioValue.setText(format);
     }
 }
