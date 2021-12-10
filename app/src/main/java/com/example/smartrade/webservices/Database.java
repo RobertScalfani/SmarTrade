@@ -379,7 +379,7 @@ public class Database implements FinanceApiListener {
                 dist = Math.acos(dist);
                 dist = rad2deg(dist);
 
-                return (dist);
+                return dist;
             }
 
             //Supporting function for calculateDistance
@@ -452,16 +452,18 @@ public class Database implements FinanceApiListener {
                             Double distance = calculateDistance(userLat, userLong, comparedLat, comparedLong);
 
                             Log.w("DISTANCE PRE ADDING", userId + " " + distance);
-                            if(distance < 100){
+                            if(distance > 100.00){
                                 badUids.add(comparedUserId);
-                                Log.w("BAD UIDS", comparedUserId);
+                                Log.w("BAD UIDS 457", comparedUserId);
                             }
                             userStockQuantities.put(userId, currentStockQuantities);
                             prepForLeaderboard.put(userId, userValues);
+                            Log.w("LEADERBOARD PREP 460", prepForLeaderboard.toString());
                         }
                     }
                     //Add userValues to our leaderboard ready hashmap
-                   // prepForLeaderboard.put(userId, userValues);
+                   //prepForLeaderboard.put(userId, userValues);
+                    // Log.w("LEADERBOARD PREP 466", prepForLeaderboard.toString());
                 }
 
                 //Creates an list of users ranked by total portfolio value
@@ -470,7 +472,7 @@ public class Database implements FinanceApiListener {
                     String cashBalStr = user.getValue().get("CASH_BALANCE");
                     usersPortfoliobalances.put(uid, Double.parseDouble(cashBalStr));
                 }
-
+                Log.w("usersPortfolioBalances 475", usersPortfoliobalances.toString());
 
                 PingFinanceApiTask.callWebserviceButtonHandler(tickerList, Database.getDatabase());
 
@@ -543,6 +545,7 @@ public class Database implements FinanceApiListener {
         // We have every ticker price in this.tickerPrices.
         // We also have every ticker count for every user in this.userStockQuantities
 
+
         for(String currentUser : this.userStockQuantities.keySet()) {
             double userPortfolioBalance = usersPortfoliobalances.get(currentUser);
             Map<String, Double> stockQuantities = this.userStockQuantities.get(currentUser);
@@ -559,7 +562,9 @@ public class Database implements FinanceApiListener {
                         userPortfolioBalance += shareValues;
                     }
                 }
+
                 if(!badUids.contains(currentUser)){
+                    Log.w("BAD_UIDS 565", currentUser);
                     usersPortfoliobalances.put(currentUser, userPortfolioBalance);
                     Log.i("LEADERBOARD UP: ", "" + usersPortfoliobalances);
                 }
