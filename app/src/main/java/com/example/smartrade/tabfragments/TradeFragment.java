@@ -50,7 +50,7 @@ public class TradeFragment extends Fragment implements FinanceApiListener, Datab
 
         if(LoginActivity.newUser) {
             this.addToCashBalance(50000);
-            Snackbar.make(rootView, "Here's $50,000 to start you off! Good Luck!", Snackbar.LENGTH_SHORT).show();
+            Toast.makeText(this.getContext(), "Here's $50,000 to start you off! Good Luck!", Toast.LENGTH_SHORT).show();
 //            this.notifyMessage("Here's $50,000 to start you off! Good Luck!");
         }
 
