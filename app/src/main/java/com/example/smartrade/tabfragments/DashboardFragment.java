@@ -54,7 +54,7 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
         // Update the current Cash Balance.
         Database.getDatabase().addToCashBalance(0.0);
         String portfolioBalance = String.format("$%.2f", Database.getDatabase().currentUserPortfolioBalance);
-        if(!portfolioBalance.equals("$nu")) {
+        if(!portfolioBalance.contains("nu")) {
             portfolioValue.setText(portfolioBalance);
         }
         this.updateRecyclerView();
@@ -136,7 +136,11 @@ public class DashboardFragment extends Fragment implements DatabaseListener {
 
     @Override
     public void notifyPortfolioBalanceUpdated() {
-        String format = String.format("$%.2f", Database.getDatabase().currentUserPortfolioBalance);
-        this.portfolioValue.setText(format);
+        String portfolioBalance = String.format("$%.2f", Database.getDatabase().currentUserPortfolioBalance);
+        if(!portfolioBalance.contains("nu")) {
+            this.portfolioValue.setText(portfolioBalance);
+        } else {
+            this.portfolioValue.setText("$0.00");
+        }
     }
 }
